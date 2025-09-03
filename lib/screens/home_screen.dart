@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/db_service.dart';
+import 'add_transaction_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -51,6 +52,16 @@ class _HomeScreenState extends State<HomeScreen> {
             },
             child: Text('Clear All Transactions'),
           ),
+          FloatingActionButton(
+            child: Icon(Icons.add),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AddTransactionScreen()),
+              ).then((_) => _loadTransactions()); // refresh after returning
+            },
+          ),
+
           Expanded(
             child: ListView.builder(
               itemCount: transactions.length,
