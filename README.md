@@ -1,16 +1,79 @@
-# expenses_tracker
+# Expenses-Tracker
 
-A new Flutter project.
+A Flutter-based mobile app to track your **income**, **expenses**, and **bills**.  
+Store transactions locally using SQLite and visualize your financial data in a simple, user-friendly interface.
+
+---
+
+## Features
+
+- Add **income** and **expense** transactions
+- Categorize transactions (with icon/color)
+- Add notes to transactions
+- Track recurring **bills**
+- View all transactions in a list
+- Clear transactions for testing/development
+- Local SQLite database for persistent storage
+- Ready for extension: charts, notifications, recurring payments
+
+---
+
+## Screenshots (Placeholder)
+
+*(Add screenshots after first UI version is ready)*
+
+---
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+### Prerequisites
 
-A few resources to get you started if this is your first Flutter project:
+- Flutter SDK installed ([Installation guide](https://docs.flutter.dev/get-started/install))
+- Android Studio or VS Code
+- Emulator or physical device connected
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### Installation
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+1. Clone the repository:
+
+```bash
+git clone https://github.com/<your-username>/expenses-tracker.git
+cd expenses-tracker
+```
+
+2. Get dependencies:
+
+```bash
+flutter pub get
+```
+
+3. Run the app:
+
+```bash
+flutter run
+```
+
+---
+
+## Project Structure
+
+```
+lib/
+├── main.dart          # Entry point
+├── screens/           # Home, add transaction screens
+├── models/            # Transaction, Bill, Category models
+├── services/          # SQLite DB service
+└── widgets/           # Reusable UI components
+```
+
+---
+
+## Development
+
+- Use **hot reload** (`Ctrl+S`) to see changes instantly
+- Use the "Clear Transactions" button during development
+- Add new features in separate branches, e.g., `feature/add-charts`
+
+---
+
+## License
