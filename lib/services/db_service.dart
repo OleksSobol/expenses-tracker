@@ -58,18 +58,18 @@ class DBService {
   }
 
   Future<int> insert(String table, Map<String, dynamic> data) async {
-  final db = await database;
-  try {
-    return await db.insert(table, data);
-  } catch (e) {
-    print('DB Insert Error: $e');
-    return -1;
-  }
-}
-
-  Future<List<Map<String, dynamic>>> queryAll(String table) async {
     final db = await database;
-    return await db.query(table);
+    try {
+      return await db.insert(table, data);
+    } catch (e) {
+      print('DB Insert Error: $e');
+      return -1;
+    }
+  }
+
+  Future<void> update(String table, int id, Map<String, dynamic> values) async {
+    final db = await database;
+    await db.update(table, values, where: 'id = ?', whereArgs: [id]);
   }
 
   Future<int> delete(String table, int id) async {
@@ -77,6 +77,11 @@ class DBService {
     return await db.delete(table, where: 'id = ?', whereArgs: [id]);
   }
   
+  Future<List<Map<String, dynamic>>> queryAll(String table) async {
+    final db = await database;
+    return await db.query(table);
+  }
+
   Future<void> clearTable(String table) async {
   final db = await database;
   await db.delete(table);

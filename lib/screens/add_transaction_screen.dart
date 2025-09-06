@@ -4,11 +4,15 @@ import '../models/category.dart';
 import 'package:intl/intl.dart';
 
 class AddTransactionScreen extends StatefulWidget {
-  const AddTransactionScreen({Key? key}) : super(key: key);
+  final Map<String, dynamic>? transaction;
+
+  const AddTransactionScreen({Key? key, this.transaction}) : super(key: key);
 
   @override
   _AddTransactionScreenState createState() => _AddTransactionScreenState();
 }
+
+
 
 class _AddTransactionScreenState extends State<AddTransactionScreen> {
   final db = DBService();
@@ -20,6 +24,21 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   int? _categoryId = categories.first.id;
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _selectedTime = TimeOfDay.now();
+
+  @override
+  void initState() {
+    super.initState();
+    
+    if (widget.transaction != null) {
+      _amountController.text = widget.transaction!['amount'].toString();
+      _noteController.text = widget.transaction!['note'];
+      _type = widget.transaction!['type'];
+      _categoryId = widget.transaction!['categoryId'];
+      DateTime dt = DateTime.parse(widget.transaction!['date']);
+      _selectedDate = dt;
+      _selectedTime = TimeOfDay(hour: dt.hour, minute: dt.minute);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -231,7 +250,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     if (_formKey.currentState!.validate()) {
       double amount = double.parse(_amountController.text);
 
-      await db.insert('transactions', {
+      final data = {
         'amount': amount,
         'type': _type,
         'categoryId': _categoryId,
@@ -243,7 +262,15 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           _selectedTime.minute,
         ).toIso8601String(),
         'note': _noteController.text,
-      });
+      };
+
+      if (widget.transaction != null) {
+        // Update existing transaction
+        await db.update('transactions', widget.transaction!['id'], data);
+      } else {
+        // Insert new transaction
+        await db.insert('transactions', data);
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Transaction saved!')),
