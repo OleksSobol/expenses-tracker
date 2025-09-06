@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/db_service.dart';
+import '../models/category.dart';
+
 
 class AddTransactionScreen extends StatefulWidget {
   const AddTransactionScreen({Key? key}) : super(key: key);
@@ -12,54 +14,118 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   final db = DBService();
   final _amountController = TextEditingController();
   final _noteController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+
   String _type = 'expense';
-  int _categoryId = 1;
+  int? _categoryId = categories.first.id;
   DateTime _selectedDate = DateTime.now();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(title: Text('Add Transaction')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _amountController,
-              keyboardType: TextInputType.numberWithOptions(decimal: true),
-              decoration: InputDecoration(labelText: 'Amount'),
-            ),
-            DropdownButton<String>(
-              value: _type,
-              items: ['income', 'expense'].map((e) => DropdownMenuItem(
-                value: e,
-                child: Text(e.toUpperCase()),
-              )).toList(),
-              onChanged: (val) => setState(() => _type = val!),
-            ),
-            TextField(
-              controller: _noteController,
-              decoration: InputDecoration(labelText: 'Note'),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () async {
-                double? amount = double.tryParse(_amountController.text);
-                if (amount == null) return;
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextFormField(
+                  controller: _amountController,
+                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(labelText: 'Amount'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter an amount';
+                    }
+                    if (double.tryParse(value) == null) {
+                      return 'Enter a valid number';
+                    }
+                    return null;
+                  },
+                ),
+                DropdownButton<String>(
+                  value: _type,
+                  items: ['income', 'expense']
+                      .map((e) => DropdownMenuItem(
+                            value: e,
+                            child: Text(e.toUpperCase()),
+                          ))
+                      .toList(),
+                  onChanged: (val) => setState(() => _type = val!),
+                ),
+                DropdownButton<int>(
+                  value: _categoryId,
+                  items: categories.map((cat) {
+                    return DropdownMenuItem<int>(
+                      value: cat.id,
+                      child: Row(
+                        children: [
+                          Icon(cat.icon, color: cat.color),
+                          SizedBox(width: 8),
+                          Text(cat.name),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (val) => setState(() => _categoryId = val!),
+                ),
+                TextFormField(
+                  controller: _noteController,
+                  decoration: InputDecoration(labelText: 'Note'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a note';
+                    }
+                    return null;
+                  },
+                ),
+                Row(
+                  children: [
+                    Text("Date: ${_selectedDate.toLocal().toString().split(' ')[0]}"),
+                    TextButton(
+                      child: Text("Pick Date"),
+                      onPressed: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: _selectedDate,
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2100),
+                        );
+                        if (picked != null) {
+                          setState(() => _selectedDate = picked);
+                        }
+                      },
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (_formKey.currentState!.validate()) {
+                      double amount = double.parse(_amountController.text);
 
-                await db.insert('transactions', {
-                  'amount': amount,
-                  'type': _type,
-                  'categoryId': _categoryId,
-                  'date': _selectedDate.toIso8601String(),
-                  'note': _noteController.text,
-                });
-
-                Navigator.pop(context); // go back to HomeScreen
-              },
-              child: Text('Save Transaction'),
+                      await db.insert('transactions', {
+                        'amount': amount,
+                        'type': _type,
+                        'categoryId': _categoryId,
+                        'date': _selectedDate.toIso8601String(),
+                        'note': _noteController.text,
+                      });
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Transation saved!'))
+                      );
+                      Navigator.pop(context, true);
+                    }
+                  },
+                  child: Text('Save Transaction'),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

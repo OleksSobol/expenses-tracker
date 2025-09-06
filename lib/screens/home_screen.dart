@@ -30,6 +30,18 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Expenses Tracker')),
+      floatingActionButton:  FloatingActionButton(
+        child: Icon(Icons.add),
+        onPressed: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => AddTransactionScreen()),
+          );
+          if (result == true) {
+            _loadTransactions();
+          }
+        },
+      ),
       body: Column(
         children: [
           ElevatedButton(
@@ -42,6 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 'note': 'Coffee',
               });
               _loadTransactions(); // Refresh list
+              // ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Transaction added')));
             },
             child: Text('Add Transaction'),
           ),
@@ -52,16 +65,6 @@ class _HomeScreenState extends State<HomeScreen> {
             },
             child: Text('Clear All Transactions'),
           ),
-          FloatingActionButton(
-            child: Icon(Icons.add),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => AddTransactionScreen()),
-              ).then((_) => _loadTransactions()); // refresh after returning
-            },
-          ),
-
           Expanded(
             child: ListView.builder(
               itemCount: transactions.length,
