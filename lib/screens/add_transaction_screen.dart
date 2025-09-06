@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/db_service.dart';
 import '../models/category.dart';
+import 'package:intl/intl.dart';
+
 
 
 class AddTransactionScreen extends StatefulWidget {
@@ -19,6 +21,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   String _type = 'expense';
   int? _categoryId = categories.first.id;
   DateTime _selectedDate = DateTime.now();
+  TimeOfDay _selectedTime = TimeOfDay.now();
 
   @override
   Widget build(BuildContext context) {
@@ -83,26 +86,43 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     return null;
                   },
                 ),
-                Row(
-                  children: [
-                    Text("Date: ${_selectedDate.toLocal().toString().split(' ')[0]}"),
-                    TextButton(
-                      child: Text("Pick Date"),
-                      onPressed: () async {
-                        final picked = await showDatePicker(
-                          context: context,
-                          initialDate: _selectedDate,
-                          firstDate: DateTime(2000),
-                          lastDate: DateTime(2100),
-                        );
-                        if (picked != null) {
-                          setState(() => _selectedDate = picked);
-                        }
-                      },
-                    ),
-                  ],
+                // Row(
+                //   children: [
+                //     Text("Date: ${_selectedDate.toLocal().toString().split(' ')[0]}"),
+                //     TextButton(
+                //       child: Text("Pick Date"),
+                //       onPressed: () async {
+                //         final picked = await showDatePicker(
+                //           context: context,
+                //           initialDate: _selectedDate,
+                //           firstDate: DateTime(2000),
+                //           lastDate: DateTime(2100),
+                //         );
+                //         if (picked != null) {
+                //           setState(() => _selectedDate = picked);
+                //         }
+                //       },
+                //     ),
+                //   ],
+                // ),
+                
+                ElevatedButton(
+                  onPressed: _pickDateTime,
+                  child: Text(
+                    'Pick Date & Time: ${DateFormat('MMM d, yyyy hh:mm a').format(
+                      DateTime(
+                        _selectedDate.year,
+                        _selectedDate.month,
+                        _selectedDate.day,
+                        _selectedTime.hour,
+                        _selectedTime.minute,
+                      ),
+                    )}',
+                  ),
                 ),
+
                 SizedBox(height: 20),
+
                 ElevatedButton(
                   onPressed: () async {
                     if (_formKey.currentState!.validate()) {
@@ -112,7 +132,13 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                         'amount': amount,
                         'type': _type,
                         'categoryId': _categoryId,
-                        'date': _selectedDate.toIso8601String(),
+                        'date': DateTime(
+                          _selectedDate.year,
+                          _selectedDate.month,
+                          _selectedDate.day,
+                          _selectedTime.hour,
+                          _selectedTime.minute,
+                        ).toIso8601String(),
                         'note': _noteController.text,
                       });
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -130,4 +156,32 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       ),
     );
   }
+
+  Future<void> _pickDateTime() async {
+  // Date picker
+  final pickedDate = await showDatePicker(
+    context: context,
+    initialDate: _selectedDate,
+    firstDate: DateTime(2000),
+    lastDate: DateTime(2100),
+  );
+
+  if (pickedDate != null) {
+    // Time picker
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: _selectedTime,
+    );
+
+    if (pickedTime != null) {
+      setState(() {
+        _selectedDate = pickedDate;
+        _selectedTime = pickedTime;
+      });
+    }
+  }
 }
+
+}
+
+

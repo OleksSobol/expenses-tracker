@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/db_service.dart';
 import 'add_transaction_screen.dart';
+import '../utils/category_helpers.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -70,9 +71,43 @@ class _HomeScreenState extends State<HomeScreen> {
               itemCount: transactions.length,
               itemBuilder: (context, index) {
                 final tx = transactions[index];
+                final category = getCategoryById(tx['categoryId']);
                 return ListTile(
-                  title: Text('${tx['note']} - \$${tx['amount']}'),
-                  subtitle: Text('${tx['type']} | ${tx['date']}'),
+                  leading: CircleAvatar(
+                    backgroundColor: category!.color.withValues(alpha: 0.2),
+                    child: Icon(category.icon, color: category.color,),
+                  ),
+                  // leading: Icon(
+                  //   getCategoryIcon(tx['categoryId']),
+                  //   color: getCategoryColor(tx['categoryId']),
+                  // ),
+                  title: Text(
+                    '${tx['note']}',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600
+                    ),
+                  ),
+                  subtitle: RichText(
+                    text: TextSpan(
+                      text: "${tx['type'].toUpperCase()} | ",
+                      style: TextStyle(color: Colors.grey[700]),
+                      children: [
+                        TextSpan(
+                          text: formatDate(tx['date']),
+                          style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                        )
+                      ],
+                    ),
+                  ),
+                  trailing: Text(
+                    formatAmount(tx['amount']),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: tx['type'] == 'expense' ? Colors.red: Colors.green,
+                    ),
+                  ),
                 );
               },
             ),
