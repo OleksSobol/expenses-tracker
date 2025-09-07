@@ -5,6 +5,7 @@ import '../models/transaction_filter_bar.dart';
 import '../models/transaction_list_item.dart';
 import '../models/transaction_service.dart';
 import 'add_transaction_screen.dart';
+import '../models/transaction_summary.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -79,10 +80,28 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Column(
         children: [
+          // Summary
+          TransactionSummary(
+            income: _allTransactions
+              .where((tx) => tx['type'] == 'income')
+              .fold(0.0, (sum, tx) => sum + (tx['amount'] as num).toDouble()),
+            expense: _allTransactions
+              .where((tx) => tx['type'] == 'expense')
+              .fold(0.0,(sum, tx) => sum + (tx['amount'] as num).toDouble()),
+            balance: _allTransactions.fold(
+              0.0,
+              (sum, tx) => tx['type'] == 'income'
+                  ? sum + (tx['amount'] as num).toDouble()
+                  : sum - (tx['amount'] as num).toDouble(),
+              ),
+          ),
+          // Filter bar
           TransactionFilterBar(
             filter: _filter,
             onFilterChanged: _onFilterChanged,
           ),
+
+          // Transaction list
           Expanded(
             child: ListView.builder(
               itemCount: filteredTransactions.length,
