@@ -18,6 +18,8 @@ String formatAmount(double amount) {
 
 String formatDate(String isoDate) {
   final date = DateTime.parse(isoDate);
-  final formatter = DateFormat('dd/MM/yyyy hh:mm a');
+  final formatter = DateFormat('MM/dd/yyyy hh:mm a');
   return formatter.format(date);
 }
+
+String capitalize(String s) => s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
