@@ -56,7 +56,6 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     });
 
-
     return Scaffold(
       appBar: AppBar(title: Text('Expenses Tracker')),
       floatingActionButton:  FloatingActionButton(
@@ -73,87 +72,93 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Column(
         children: [
-
+      
       Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: 
-            
-            Row(
+            Wrap(
               children: [
                 Flexible(
                   flex: 2,
-                  child: DropdownButton<String>(
-                    isExpanded: true,
-                    value: _filterType,
-                    items: ['all', 'income', 'expense']
-                        .map((e) => DropdownMenuItem(
-                              value: e,
-                              child: Text(capitalize(e)),
-                            ))
-                        .toList(),
-                    onChanged: (val) => setState(() => _filterType = val!),
+                  child: Wrap(
+                    spacing: 8,
+                    children: ['All', 'Income', 'Expense'].map((type) {
+                      return ChoiceChip(
+                        label: Text(type),
+                        selected: _filterType.toLowerCase() == type.toLowerCase(),
+                        onSelected: (_) => setState(() => _filterType = type.toLowerCase()),
+                      );
+                    }).toList(),
                   ),
                 ),
                 SizedBox(width: 8),
-                Flexible(
-                  flex: 4,
-                  child: DropdownButton<int?>(
-                    isExpanded: true,
-                    value: _filterCategoryId,
-                    hint: Text('All Categories'),
-                    items: [
-                      DropdownMenuItem(value: null, child: Text('All Categories')),
-                      ...categories.map(
-                        (cat) => DropdownMenuItem(
-                          value: cat.id,
-                          child: Text(cat.name),
+               Flexible(
+                flex: 4,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      ChoiceChip(
+                        label: Text('All Categories'),
+                        selected: _filterCategoryId == null,
+                        onSelected: (_) => setState(() => _filterCategoryId = null),
+                      ),
+                      SizedBox(width: 8),
+                      ...categories.map((cat) => Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: ChoiceChip(
+                          label: Text(cat.name),
+                          selected: _filterCategoryId == cat.id,
+                          avatar: Icon(cat.icon, size: 18, color: cat.color),
+                          selectedColor: cat.color.withOpacity(0.3),
+                          onSelected: (_) => setState(() => _filterCategoryId = cat.id),
                         ),
-                      )
+                      )),
                     ],
-                    onChanged: (val) => setState(() => _filterCategoryId = val),
                   ),
                 ),
+              ),
+
                 SizedBox(width: 8),
                 Flexible(
                   flex: 2,
-                  child: DropdownButton<String>(
-                    isExpanded: true,
-                    value: _sortBy,
-                    items: [
-                      DropdownMenuItem(value: 'date_desc', child: Text('Date ↓')),
-                      DropdownMenuItem(value: 'date_asc', child: Text('Date ↑')),
-                      DropdownMenuItem(value: 'amount_desc', child: Text('Amount ↓')),
-                      DropdownMenuItem(value: 'amount_asc', child: Text('Amount ↑')),
-                    ],
-                    onChanged: (val) => setState(() => _sortBy = val!),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        ChoiceChip(
+                          label: Text('Date ↓'),
+                          selected: _sortBy == 'date_desc',
+                          onSelected: (_) => setState(() => _sortBy = 'date_desc'),
+                        ),
+                        SizedBox(width: 8),
+                        ChoiceChip(
+                          label: Text('Date ↑'),
+                          selected: _sortBy == 'date_asc',
+                          onSelected: (_) => setState(() => _sortBy = 'date_asc'),
+                        ),
+                        SizedBox(width: 8),
+                        ChoiceChip(
+                          label: Text('Amount ↓'),
+                          selected: _sortBy == 'amount_desc',
+                          onSelected: (_) => setState(() => _sortBy = 'amount_desc'),
+                        ),
+                        SizedBox(width: 8),
+                        ChoiceChip(
+                          label: Text('Amount ↑'),
+                          selected: _sortBy == 'amount_asc',
+                          onSelected: (_) => setState(() => _sortBy = 'amount_asc'),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
             ),
           ),
 
+          // SizedBox(height: 8), // right after filter row
 
-          // ElevatedButton(
-          //   onPressed: () async {
-          //     await db.insert('transactions', {
-          //       'amount': 12.5,
-          //       'type': 'expense',
-          //       'categoryId': 1,
-          //       'date': DateTime.now().toIso8601String(),
-          //       'note': 'Coffee',
-          //     });
-          //     _loadTransactions(); // Refresh list
-          //     // ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Transaction added')));
-          //   },
-          //   child: Text('Add Transaction'),
-          // ),
-          // ElevatedButton(
-          //   onPressed: () async {
-          //     await db.clearTable('transactions');
-          //     _loadTransactions(); // refresh list
-          //   },
-          //   child: Text('Clear All Transactions'),
-          // ),
           Expanded(
             child: ListView.builder(
               itemCount: filtered.length,
