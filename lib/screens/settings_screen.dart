@@ -165,31 +165,4 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
-
-  Widget _buildColorSample(String label, Color color) {
-    return Column(
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: Theme.of(context).colorScheme.outline,
-              width: 1,
-            ),
-          ),
-        ),
-        SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
-    );
-  }
 }
