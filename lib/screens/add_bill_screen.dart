@@ -136,119 +136,124 @@ class _AddBillScreenState extends State<AddBillScreen> {
             ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: InputDecoration(
-                  labelText: 'Bill Name',
-                  hintText: 'e.g., Electric Bill',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter a bill name';
-                  }
-                  return null;
-                },
-              ),
-              
-              SizedBox(height: 16),
-              
-              TextFormField(
-                controller: _amountController,
-                decoration: InputDecoration(
-                  labelText: 'Amount',
-                  hintText: '0.00',
-                  prefixText: '\$',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.numberWithOptions(decimal: true),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter an amount';
-                  }
-                  final amount = double.tryParse(value);
-                  if (amount == null || amount <= 0) {
-                    return 'Please enter a valid amount';
-                  }
-                  return null;
-                },
-              ),
-              
-              SizedBox(height: 16),
-              
-              InkWell(
-                onTap: _selectDate,
-                child: InputDecorator(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextFormField(
+                  controller: _nameController,
                   decoration: InputDecoration(
-                    labelText: 'Next Due Date',
+                    labelText: 'Bill Name',
+                    hintText: 'e.g., Electric Bill',
                     border: OutlineInputBorder(),
-                    suffixIcon: Icon(Icons.calendar_today),
                   ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter a bill name';
+                    }
+                    return null;
+                  },
+                ),
+                
+                SizedBox(height: 16),
+                
+                TextFormField(
+                  controller: _amountController,
+                  decoration: InputDecoration(
+                    labelText: 'Amount',
+                    hintText: '0.00',
+                    prefixText: '\$',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter an amount';
+                    }
+                    final amount = double.tryParse(value);
+                    if (amount == null || amount <= 0) {
+                      return 'Please enter a valid amount';
+                    }
+                    return null;
+                  },
+                ),
+                
+                SizedBox(height: 16),
+                
+                InkWell(
+                  onTap: _selectDate,
+                  child: InputDecorator(
+                    decoration: InputDecoration(
+                      labelText: 'Next Due Date',
+                      border: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.calendar_today),
+                    ),
+                    child: Text(
+                      '${_nextDueDate.month.toString().padLeft(2, '0')}-${_nextDueDate.day.toString().padLeft(2, '0')}-${_nextDueDate.year}',
+                    ),
+                  ),
+                ),
+                
+                SizedBox(height: 16),
+                
+                DropdownButtonFormField<String>(
+                  value: _frequency,
+                  decoration: InputDecoration(
+                    labelText: 'Frequency',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: ['daily', 'weekly', 'monthly', 'yearly']
+                      .map((freq) => DropdownMenuItem(
+                            value: freq,
+                            child: Text(_capitalize(freq)),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        _frequency = value;
+                      });
+                    }
+                  },
+                ),
+                
+                SizedBox(height: 16),
+                
+                TextFormField(
+                  controller: _notesController,
+                  decoration: InputDecoration(
+                    labelText: 'Notes (Optional)',
+                    hintText: 'Website, account number, or other info...',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 3,
+                  textInputAction: TextInputAction.newline,
+                ),
+                
+                SizedBox(height: 32),
+                
+                ElevatedButton(
+                  onPressed: _saveBill,
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    // padding: EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  
                   child: Text(
-                    '${_nextDueDate.day}/${_nextDueDate.month}/${_nextDueDate.year}',
+                    isEditing ? 'Update Bill' : 'Add Bill',
+                    style: TextStyle(fontSize: 16),
                   ),
                 ),
-              ),
-              
-              SizedBox(height: 16),
-              
-              DropdownButtonFormField<String>(
-                value: _frequency,
-                decoration: InputDecoration(
-                  labelText: 'Frequency',
-                  border: OutlineInputBorder(),
-                ),
-                items: ['daily', 'weekly', 'monthly', 'yearly']
-                    .map((freq) => DropdownMenuItem(
-                          value: freq,
-                          child: Text(_capitalize(freq)),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() {
-                      _frequency = value;
-                    });
-                  }
-                },
-              ),
-              
-              SizedBox(height: 16),
-              
-              TextFormField(
-                controller: _notesController,
-                decoration: InputDecoration(
-                  labelText: 'Notes (Optional)',
-                  hintText: 'Website, account number, or other info...',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 3,
-                textInputAction: TextInputAction.newline,
-              ),
-              
-              SizedBox(height: 32),
-              
-              ElevatedButton(
-                onPressed: _saveBill,
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: Text(
-                  isEditing ? 'Update Bill' : 'Add Bill',
-                  style: TextStyle(fontSize: 16),
-                ),
-              ),
-              
-              // Add some bottom padding to ensure the button is accessible when keyboard is open
-              SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 16),
-            ],
+              ],
+            ),
           ),
         ),
       ),

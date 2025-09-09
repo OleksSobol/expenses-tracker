@@ -4,6 +4,7 @@ import '../models/bill.dart';
 import '../services/bill_service.dart';
 import 'add_bill_screen.dart';
 
+
 class BillsScreen extends StatefulWidget {
   const BillsScreen({Key? key}) : super(key: key);
 
@@ -15,6 +16,7 @@ class _BillsScreenState extends State<BillsScreen> with TickerProviderStateMixin
   final BillService _billService = BillService();
   List<Bill> _bills = [];
   bool _isLoading = true;
+  bool _showSwipeHint = true;
   late AnimationController _payAnimationController;
   int? _payingBillId;
 
@@ -258,7 +260,7 @@ class _BillsScreenState extends State<BillsScreen> with TickerProviderStateMixin
     return Scaffold(
       appBar: AppBar(
         title: Text('Bills'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        // backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
           IconButton(
             icon: Icon(Icons.refresh),
@@ -307,14 +309,32 @@ class _BillsScreenState extends State<BillsScreen> with TickerProviderStateMixin
     );
   }
 
-  Widget _buildBillsList() {
+    Widget _buildBillsList() {
     return RefreshIndicator(
       onRefresh: _loadBills,
       child: ListView.builder(
-        itemCount: _bills.length,
+        itemCount: _bills.length + (_showSwipeHint ? 1 : 0), // +1 for hint banner
         padding: EdgeInsets.all(8),
         itemBuilder: (context, index) {
-          final bill = _bills[index];
+          if (_showSwipeHint && index == 0) {
+            // Render the swipe hint as the first item
+            return Card(
+              margin: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              color: Colors.blue.shade50,
+              child: ListTile(
+                leading: Icon(Icons.info_outline, color: Colors.blue),
+                title: Text('Swipe → to pay, ← to delete bills'),
+                trailing: IconButton(
+                  icon: Icon(Icons.close),
+                  onPressed: () => setState(() => _showSwipeHint = false),
+                ),
+              ),
+            );
+          }
+
+          // FIXED: Adjust the bill index when hint is shown
+          final billIndex = _showSwipeHint ? index - 1 : index;
+          final bill = _bills[billIndex];
           final dueColor = _getDueColor(bill);
           final isPayingThis = _payingBillId == bill.id;
           
@@ -325,17 +345,15 @@ class _BillsScreenState extends State<BillsScreen> with TickerProviderStateMixin
             child: Dismissible(
               key: Key('bill_${bill.id}'),
               direction: bill.isPaid 
-                  ? DismissDirection.endToStart // Only delete if paid
-                  : DismissDirection.horizontal, // Pay or delete if unpaid
+                  ? DismissDirection.endToStart
+                  : DismissDirection.horizontal,
               background: _buildPayBackground(),
               secondaryBackground: _buildDeleteBackground(),
               confirmDismiss: (direction) async {
                 if (direction == DismissDirection.startToEnd && !bill.isPaid) {
-                  // Swipe right to pay
                   _markBillAsPaid(bill);
-                  return false; // Don't dismiss, we'll handle it manually
+                  return false;
                 } else if (direction == DismissDirection.endToStart) {
-                  // Swipe left to delete
                   return await showDialog(
                     context: context,
                     builder: (context) => AlertDialog(
@@ -370,7 +388,7 @@ class _BillsScreenState extends State<BillsScreen> with TickerProviderStateMixin
                   leading: Stack(
                     children: [
                       CircleAvatar(
-                        backgroundColor: dueColor.withOpacity(0.2),
+                        backgroundColor: dueColor.withValues(alpha: 0.2),
                         child: Icon(
                           bill.isPaid ? Icons.check_circle : Icons.receipt,
                           color: dueColor,
@@ -424,18 +442,6 @@ class _BillsScreenState extends State<BillsScreen> with TickerProviderStateMixin
                           fontSize: 12,
                         ),
                       ),
-                      if (!bill.isPaid)
-                        Padding(
-                          padding: EdgeInsets.only(top: 4),
-                          child: Text(
-                            'Swipe → to pay, ← to delete',
-                            style: TextStyle(
-                              color: Colors.grey[500],
-                              fontSize: 11,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ),
                     ],
                   ),
                   trailing: Column(

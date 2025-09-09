@@ -73,7 +73,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Expenses Tracker')),
+      appBar: AppBar(
+        title: const Text('Expenses Tracker'),
+        // backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        actions: [],
+      ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
         onPressed: _onAddTransaction,
