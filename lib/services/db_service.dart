@@ -45,7 +45,9 @@ class DBService {
             nextDueDate TEXT NOT NULL,
             autopay INTEGER NOT NULL DEFAULT 0,
             categoryId INTEGER,
-            notes TEXT
+            notes TEXT,
+            lastPaidDate TEXT,
+            isPaid INTEGER NOT NULL DEFAULT 0
           )
         ''');
 

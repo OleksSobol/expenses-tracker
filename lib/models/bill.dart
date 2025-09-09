@@ -8,6 +8,8 @@ class Bill {
   final bool autopay;
   final int? categoryId;
   final String? notes;
+  final DateTime? lastPaidDate;
+  final bool isPaid; // whether current period is paid
 
   Bill({
     this.id,
@@ -18,6 +20,8 @@ class Bill {
     this.autopay = false,
     this.categoryId,
     this.notes,
+    this.lastPaidDate,
+    this.isPaid = false,
   });
 
   // Convert from database map
@@ -31,20 +35,26 @@ class Bill {
       autopay: (map['autopay'] as int?) == 1,
       categoryId: map['categoryId'] as int?,
       notes: map['notes'] as String?,
+      lastPaidDate: map['lastPaidDate'] != null 
+          ? DateTime.parse(map['lastPaidDate'] as String)
+          : null,
+      isPaid: (map['isPaid'] as int?) == 1,
     );
   }
 
   // Convert to database map
   Map<String, dynamic> toMap() {
     return {
-      if (id != null) 'id': id, // only include id if it's not null
+      if (id != null) 'id': id,
       'name': name,
       'amount': amount,
       'nextDueDate': nextDueDate.toIso8601String(),
       'frequency': frequency,
-      'autopay': autopay ? 1 : 0, // SQLite stores booleans as integers
+      'autopay': autopay ? 1 : 0,
       if (categoryId != null) 'categoryId': categoryId,
       if (notes != null) 'notes': notes,
+      if (lastPaidDate != null) 'lastPaidDate': lastPaidDate!.toIso8601String(),
+      'isPaid': isPaid ? 1 : 0,
     };
   }
 
@@ -58,6 +68,8 @@ class Bill {
     bool? autopay,
     int? categoryId,
     String? notes,
+    DateTime? lastPaidDate,
+    bool? isPaid,
   }) {
     return Bill(
       id: id ?? this.id,
@@ -68,6 +80,34 @@ class Bill {
       autopay: autopay ?? this.autopay,
       categoryId: categoryId ?? this.categoryId,
       notes: notes ?? this.notes,
+      lastPaidDate: lastPaidDate ?? this.lastPaidDate,
+      isPaid: isPaid ?? this.isPaid,
+    );
+  }
+
+  // Calculate next due date based on frequency
+  DateTime calculateNextDueDate() {
+    final current = nextDueDate;
+    switch (frequency) {
+      case 'daily':
+        return current.add(Duration(days: 1));
+      case 'weekly':
+        return current.add(Duration(days: 7));
+      case 'monthly':
+        return DateTime(current.year, current.month + 1, current.day);
+      case 'yearly':
+        return DateTime(current.year + 1, current.month, current.day);
+      default:
+        return current.add(Duration(days: 30)); // fallback
+    }
+  }
+
+  // Mark bill as paid and update next due date
+  Bill markAsPaid() {
+    return copyWith(
+      isPaid: false, // reset for next period
+      lastPaidDate: DateTime.now(),
+      nextDueDate: calculateNextDueDate(),
     );
   }
 }

@@ -1,5 +1,6 @@
 // lib/services/bill_service.dart
 import '../models/bill.dart';
+import '../models/transaction.dart';
 import 'db_service.dart';
 
 class BillService {
@@ -40,5 +41,57 @@ class BillService {
       return Bill.fromMap(maps.first);
     }
     return null;
+  }
+
+  // Mark bill as paid and create transaction
+  Future<void> markBillAsPaid(Bill bill) async {
+    if (bill.id == null) return;
+
+    // Create updated bill with next due date
+    final updatedBill = bill.markAsPaid();
+    
+    // Update bill in database
+    await updateBill(bill.id!, updatedBill);
+
+    // Create transaction record for the payment
+    final transaction = TransactionModel(
+      amount: bill.amount,
+      type: 'expense',
+      categoryId: bill.categoryId ?? 5, // Default to Bills category
+      date: DateTime.now(),
+      note: 'Bill payment: ${bill.name}',
+      billId: bill.id,
+    );
+
+    // Insert transaction
+    await _dbService.insert('transactions', transaction.toMap());
+  }
+
+  // Get overdue bills
+  Future<List<Bill>> getOverdueBills() async {
+    final billsData = await getAllBills();
+    final bills = billsData.map((map) => Bill.fromMap(map)).toList();
+    final now = DateTime.now();
+    
+    return bills.where((bill) {
+      final today = DateTime(now.year, now.month, now.day);
+      final dueDate = DateTime(bill.nextDueDate.year, bill.nextDueDate.month, bill.nextDueDate.day);
+      return dueDate.isBefore(today) && !bill.isPaid;
+    }).toList();
+  }
+
+  // Get bills due soon (within 3 days)
+  Future<List<Bill>> getBillsDueSoon() async {
+    final billsData = await getAllBills();
+    final bills = billsData.map((map) => Bill.fromMap(map)).toList();
+    final now = DateTime.now();
+    final threeDaysFromNow = now.add(Duration(days: 3));
+    
+    return bills.where((bill) {
+      final dueDate = bill.nextDueDate;
+      return dueDate.isAfter(now) && 
+             dueDate.isBefore(threeDaysFromNow) && 
+             !bill.isPaid;
+    }).toList();
   }
 }

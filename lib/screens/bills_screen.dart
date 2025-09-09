@@ -11,15 +11,27 @@ class BillsScreen extends StatefulWidget {
   _BillsScreenState createState() => _BillsScreenState();
 }
 
-class _BillsScreenState extends State<BillsScreen> {
+class _BillsScreenState extends State<BillsScreen> with TickerProviderStateMixin {
   final BillService _billService = BillService();
   List<Bill> _bills = [];
   bool _isLoading = true;
+  late AnimationController _payAnimationController;
+  int? _payingBillId;
 
   @override
   void initState() {
     super.initState();
+    _payAnimationController = AnimationController(
+      duration: Duration(milliseconds: 600),
+      vsync: this,
+    );
     _loadBills();
+  }
+
+  @override
+  void dispose() {
+    _payAnimationController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadBills() async {
@@ -42,6 +54,8 @@ class _BillsScreenState extends State<BillsScreen> {
   }
 
   Color _getDueColor(Bill bill) {
+    if (bill.isPaid) return Colors.green;
+    
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final dueDate = DateTime(bill.nextDueDate.year, bill.nextDueDate.month, bill.nextDueDate.day);
@@ -49,10 +63,12 @@ class _BillsScreenState extends State<BillsScreen> {
 
     if (daysDiff < 0) return Colors.red; // overdue
     if (daysDiff <= 3) return Colors.orange; // due soon
-    return Colors.green; // normal
+    return Colors.grey[600]!; // normal
   }
 
   String _getDueText(Bill bill) {
+    if (bill.isPaid) return 'Paid for this period';
+    
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final dueDate = DateTime(bill.nextDueDate.year, bill.nextDueDate.month, bill.nextDueDate.day);
@@ -82,9 +98,91 @@ class _BillsScreenState extends State<BillsScreen> {
       ),
     );
 
-    // Reload bills if something changed
     if (result == true) {
       _loadBills();
+    }
+  }
+
+  Future<void> _markBillAsPaid(Bill bill) async {
+    if (bill.id == null || bill.isPaid) return;
+
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Mark Bill as Paid'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Mark "${bill.name}" as paid?'),
+            SizedBox(height: 8),
+            Text(
+              'Amount: \$${bill.amount.toStringAsFixed(2)}',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'This will create a transaction and move the bill to the next ${bill.frequency} period.',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+            ),
+            child: Text('Mark as Paid'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      setState(() => _payingBillId = bill.id);
+      _payAnimationController.forward();
+
+      await _billService.markBillAsPaid(bill);
+      
+      await Future.delayed(Duration(milliseconds: 300)); // Animation delay
+      
+      _loadBills();
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${bill.name} marked as paid!'),
+          backgroundColor: Colors.green,
+          action: SnackBarAction(
+            label: 'View',
+            textColor: Colors.white,
+            onPressed: () {
+              // Could navigate to transaction details
+            },
+          ),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error marking bill as paid: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => _payingBillId = null);
+      _payAnimationController.reset();
     }
   }
 
@@ -93,7 +191,7 @@ class _BillsScreenState extends State<BillsScreen> {
 
     try {
       await _billService.deleteBill(bill.id!);
-      _loadBills(); // Reload the list
+      _loadBills();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('${bill.name} deleted')),
       );
@@ -104,12 +202,70 @@ class _BillsScreenState extends State<BillsScreen> {
     }
   }
 
+  Widget _buildPayBackground() {
+    return Container(
+      alignment: Alignment.centerLeft,
+      padding: EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.green[400]!, Colors.green[600]!],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.payment, color: Colors.white, size: 24),
+          SizedBox(width: 8),
+          Text(
+            'Mark as Paid',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDeleteBackground() {
+    return Container(
+      alignment: Alignment.centerRight,
+      padding: EdgeInsets.symmetric(horizontal: 20),
+      color: Colors.red,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Text(
+            'Delete',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+          SizedBox(width: 8),
+          Icon(Icons.delete, color: Colors.white, size: 24),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Bills'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: _loadBills,
+            tooltip: 'Refresh',
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _navigateToAddBill(),
@@ -160,91 +316,166 @@ class _BillsScreenState extends State<BillsScreen> {
         itemBuilder: (context, index) {
           final bill = _bills[index];
           final dueColor = _getDueColor(bill);
+          final isPayingThis = _payingBillId == bill.id;
           
           return Card(
             margin: EdgeInsets.symmetric(vertical: 4),
+            elevation: bill.isPaid ? 1 : 2,
+            color: bill.isPaid ? Colors.grey[50] : null,
             child: Dismissible(
               key: Key('bill_${bill.id}'),
-              direction: DismissDirection.endToStart,
-              background: Container(
-                alignment: Alignment.centerRight,
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                color: Colors.red,
-                child: Icon(
-                  Icons.delete,
-                  color: Colors.white,
-                ),
-              ),
+              direction: bill.isPaid 
+                  ? DismissDirection.endToStart // Only delete if paid
+                  : DismissDirection.horizontal, // Pay or delete if unpaid
+              background: _buildPayBackground(),
+              secondaryBackground: _buildDeleteBackground(),
               confirmDismiss: (direction) async {
-                return await showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: Text('Delete Bill'),
-                    content: Text('Delete "${bill.name}"?'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        child: Text('Delete'),
-                      ),
-                    ],
-                  ),
-                );
+                if (direction == DismissDirection.startToEnd && !bill.isPaid) {
+                  // Swipe right to pay
+                  _markBillAsPaid(bill);
+                  return false; // Don't dismiss, we'll handle it manually
+                } else if (direction == DismissDirection.endToStart) {
+                  // Swipe left to delete
+                  return await showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text('Delete Bill'),
+                      content: Text('Delete "${bill.name}"?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: Text('Delete'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                return false;
               },
               onDismissed: (direction) => _deleteBill(bill),
-              child: ListTile(
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                title: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        bill.name,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
+              child: AnimatedContainer(
+                duration: Duration(milliseconds: 300),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  border: isPayingThis 
+                      ? Border.all(color: Colors.green, width: 2)
+                      : null,
+                ),
+                child: ListTile(
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  leading: Stack(
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: dueColor.withOpacity(0.2),
+                        child: Icon(
+                          bill.isPaid ? Icons.check_circle : Icons.receipt,
+                          color: dueColor,
                         ),
                       ),
-                    ),
-                    if (bill.notes != null && bill.notes!.isNotEmpty)
-                      Icon(
-                        Icons.note,
-                        size: 16,
-                        color: Colors.grey[600],
-                      ),
-                  ],
-                ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(height: 4),
-                    Text(
-                      _getDueText(bill),
-                      style: TextStyle(
-                        color: dueColor,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Text(
-                      'Repeats ${_capitalize(bill.frequency)}',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-                trailing: Text(
-                  '\$${bill.amount.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: Theme.of(context).primaryColor,
+                      if (isPayingThis)
+                        Positioned.fill(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+                          ),
+                        ),
+                    ],
                   ),
+                  title: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          bill.name,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                            decoration: bill.isPaid ? TextDecoration.lineThrough : null,
+                            color: bill.isPaid ? Colors.grey : null,
+                          ),
+                        ),
+                      ),
+                      if (bill.notes != null && bill.notes!.isNotEmpty)
+                        Icon(
+                          Icons.note,
+                          size: 16,
+                          color: Colors.grey[600],
+                        ),
+                    ],
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(height: 4),
+                      Text(
+                        _getDueText(bill),
+                        style: TextStyle(
+                          color: dueColor,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Text(
+                        'Repeats ${_capitalize(bill.frequency)}',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 12,
+                        ),
+                      ),
+                      if (!bill.isPaid)
+                        Padding(
+                          padding: EdgeInsets.only(top: 4),
+                          child: Text(
+                            'Swipe → to pay, ← to delete',
+                            style: TextStyle(
+                              color: Colors.grey[500],
+                              fontSize: 11,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  trailing: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '\$${bill.amount.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: bill.isPaid ? Colors.grey : Theme.of(context).primaryColor,
+                        ),
+                      ),
+                      if (!bill.isPaid && !isPayingThis)
+                        Padding(
+                          padding: EdgeInsets.only(top: 4),
+                          child: InkWell(
+                            onTap: () => _markBillAsPaid(bill),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.green,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                'Pay',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  onTap: () => _navigateToAddBill(bill),
                 ),
-                onTap: () => _navigateToAddBill(bill),
               ),
             ),
           );
