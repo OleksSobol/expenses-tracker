@@ -22,33 +22,38 @@ class DBService {
       path,
       version: 1,
       onCreate: (db, version) async {
+        // Transactions table
         await db.execute('''
           CREATE TABLE transactions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            amount REAL,
-            type TEXT,
+            amount REAL NOT NULL,
+            type TEXT NOT NULL,
             categoryId INTEGER,
-            date TEXT,
+            date TEXT NOT NULL,
             note TEXT,
             billId INTEGER
           )
         ''');
 
+        // Bills table with all required fields
         await db.execute('''
           CREATE TABLE bills (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            amount REAL,
-            frequency TEXT,
-            nextDueDate TEXT,
-            autopay INTEGER
+            name TEXT NOT NULL,
+            amount REAL NOT NULL,
+            frequency TEXT NOT NULL,
+            nextDueDate TEXT NOT NULL,
+            autopay INTEGER NOT NULL DEFAULT 0,
+            categoryId INTEGER,
+            notes TEXT
           )
         ''');
 
+        // Categories table
         await db.execute('''
           CREATE TABLE categories (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
+            name TEXT NOT NULL,
             icon TEXT,
             color TEXT
           )
@@ -79,13 +84,12 @@ class DBService {
   
   Future<List<Map<String, dynamic>>> queryAll(String table) async {
     final db = await database;
-    return await db.query(table);
+    return await db.query(table, orderBy: 'id DESC');
   }
 
   Future<void> clearTable(String table) async {
-  final db = await database;
-  await db.delete(table);
-  print('$table cleared');
-}
-
+    final db = await database;
+    await db.delete(table);
+    print('$table cleared');
+  }
 }

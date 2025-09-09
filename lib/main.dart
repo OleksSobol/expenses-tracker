@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/home_screen.dart';
+import 'screens/main_screen.dart';
 
 void main() {
   runApp(ExpensesTrackerApp());
@@ -15,7 +15,7 @@ class ExpensesTrackerApp extends StatelessWidget {
         primarySwatch: Colors.teal,
         brightness: Brightness.light,
       ),
-      home: HomeScreen(),
+      home: MainScreen(),
     );
   }
 }

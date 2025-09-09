@@ -1,11 +1,11 @@
 // screens/home_screen.dart
 import 'package:flutter/material.dart';
 import '../models/transaction_filter.dart';
-import '../models/transaction_filter_bar.dart';
-import '../models/transaction_list_item.dart';
-import '../models/transaction_service.dart';
+import '../widgets/transaction_filter_bar.dart';
+import '../widgets/transaction_list_item.dart';
+import '../widgets/transaction_summary.dart';
+import '../services/transaction_service.dart';
 import 'add_transaction_screen.dart';
-import '../models/transaction_summary.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -103,17 +103,39 @@ class _HomeScreenState extends State<HomeScreen> {
 
           // Transaction list
           Expanded(
-            child: ListView.builder(
-              itemCount: filteredTransactions.length,
-              itemBuilder: (context, index) {
-                final transaction = filteredTransactions[index];
-                return TransactionListItem(
-                  transaction: transaction,
-                  onTap: () => _onTransactionTap(transaction),
-                  onDelete: () => _onTransactionDelete(transaction),
-                );
-              },
-            ),
+            child: filteredTransactions.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.receipt, size: 64, color: Colors.grey),
+                        SizedBox(height: 16),
+                        Text(
+                          'No transactions yet',
+                          style: TextStyle(fontSize: 18, color: Colors.grey),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Tap + to add your first transaction',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  )
+                : RefreshIndicator(
+                    onRefresh: _loadTransactions,
+                    child: ListView.builder(
+                      itemCount: filteredTransactions.length,
+                      itemBuilder: (context, index) {
+                        final transaction = filteredTransactions[index];
+                        return TransactionListItem(
+                          transaction: transaction,
+                          onTap: () => _onTransactionTap(transaction),
+                          onDelete: () => _onTransactionDelete(transaction),
+                        );
+                      },
+                    ),
+                  ),
           ),
         ],
       ),

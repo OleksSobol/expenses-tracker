@@ -1,6 +1,6 @@
 // services/transaction_service.dart
 import '../models/transaction_filter.dart';
-import '../services/db_service.dart';
+import 'db_service.dart';
 
 class TransactionService {
   final DBService _db = DBService();
