@@ -8,11 +8,11 @@ class TransactionListItem extends StatelessWidget {
   final VoidCallback onDelete;
 
   const TransactionListItem({
-    Key? key,
+    super.key,
     required this.transaction,
     required this.onTap,
     required this.onDelete,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

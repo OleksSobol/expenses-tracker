@@ -8,10 +8,10 @@ class TransactionFilterBar extends StatelessWidget {
   final Function(TransactionFilter) onFilterChanged;
 
   const TransactionFilterBar({
-    Key? key,
+    super.key,
     required this.filter,
     required this.onFilterChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

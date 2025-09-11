@@ -6,13 +6,11 @@ import 'package:intl/intl.dart';
 class AddTransactionScreen extends StatefulWidget {
   final Map<String, dynamic>? transaction;
 
-  const AddTransactionScreen({Key? key, this.transaction}) : super(key: key);
+  const AddTransactionScreen({super.key, this.transaction});
 
   @override
   _AddTransactionScreenState createState() => _AddTransactionScreenState();
 }
-
-
 
 class _AddTransactionScreenState extends State<AddTransactionScreen> {
   final db = DBService();
@@ -24,6 +22,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   int? _categoryId = categories.first.id;
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _selectedTime = TimeOfDay.now();
+
+  bool get isEditing => widget.transaction != null;
 
   @override
   void initState() {
@@ -41,125 +41,224 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   }
 
   @override
+  void dispose() {
+    _amountController.dispose();
+    _noteController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: true,
-      appBar: AppBar(title: Text('Add Transaction')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      appBar: AppBar(
+        title: Text(isEditing ? 'Edit Transaction' : 'Add Transaction'),
+        actions: [
+          if (isEditing)
+            IconButton(
+              icon: Icon(Icons.delete),
+              onPressed: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text('Delete Transaction'),
+                    content: Text('Are you sure you want to delete this transaction?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: Text('Delete'),
+                      ),
+                    ],
+                  ),
+                );
+                
+                if (confirmed == true) {
+                  await db.delete('transactions', widget.transaction!['id']);
+                  Navigator.pop(context, true);
+                }
+              },
+            ),
+        ],
+      ),
+      body: SafeArea(
         child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
           child: Form(
             key: _formKey,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Amount field
+                // Amount field - styled like bill screen
                 TextFormField(
                   controller: _amountController,
+                  decoration: InputDecoration(
+                    labelText: 'Amount',
+                    hintText: '0.00',
+                    prefixText: '\$',
+                    border: OutlineInputBorder(),
+                  ),
                   keyboardType: TextInputType.numberWithOptions(decimal: true),
-                  decoration: InputDecoration(labelText: 'Amount'),
                   validator: (value) {
-                    if (value == null || value.isEmpty) return 'Please enter an amount';
-                    if (double.tryParse(value) == null) return 'Enter a valid number';
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter an amount';
+                    }
+                    final amount = double.tryParse(value);
+                    if (amount == null || amount <= 0) {
+                      return 'Please enter a valid amount';
+                    }
                     return null;
                   },
                 ),
 
                 SizedBox(height: 16),
 
-                // Income / Expense toggle
-               Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: ChoiceChip(
-                      label: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 14), // taller
+                // Transaction Type - improved styling
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade400),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.only(left: 12, top: 8),
                         child: Text(
-                          "Expense",
+                          'Transaction Type',
                           style: TextStyle(
-                            color: _type == 'expense' ? Colors.red : Colors.black,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16, // bigger text
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
                           ),
-                          textAlign: TextAlign.center,
                         ),
                       ),
-                      selected: _type == 'expense',
-                      selectedColor: Colors.red.shade100,
-                      onSelected: (_) => setState(() => _type = 'expense'),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: ChoiceChip(
-                      label: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 14), // taller
-                        child: Text(
-                          "Income",
-                          style: TextStyle(
-                            color: _type == 'income' ? Colors.green : Colors.black,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16, // bigger text
-                          ),
-                          textAlign: TextAlign.center,
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: ChoiceChip(
+                                label: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                  child: Text(
+                                    "Expense",
+                                    style: TextStyle(
+                                      color: _type == 'expense' ? Colors.white : Colors.red,
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 14,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                selected: _type == 'expense',
+                                selectedColor: Colors.red,
+                                backgroundColor: Colors.red.shade50,
+                                onSelected: (_) => setState(() => _type = 'expense'),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: ChoiceChip(
+                                label: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                  child: Text(
+                                    "Income",
+                                    style: TextStyle(
+                                      color: _type == 'income' ? Colors.white : Colors.green,
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 14,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                selected: _type == 'income',
+                                selectedColor: Colors.green,
+                                backgroundColor: Colors.green.shade50,
+                                onSelected: (_) => setState(() => _type = 'income'),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      selected: _type == 'income',
-                      selectedColor: Colors.green.shade100,
-                      onSelected: (_) => setState(() => _type = 'income'),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
+                ),
 
                 SizedBox(height: 16),
 
-                // Category selector
-                GestureDetector(
+                // Category selector - styled like bill screen dropdown
+                InkWell(
                   onTap: () async {
                     final selected = await showModalBottomSheet<int>(
                       context: context,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
                       ),
-                      builder: (context) => ListView(
+                      builder: (context) => Container(
                         padding: EdgeInsets.all(16),
-                        children: categories.map((cat) {
-                          return ListTile(
-                            leading: Icon(cat.icon, color: cat.color),
-                            title: Text(cat.name),
-                            onTap: () => Navigator.pop(context, cat.id),
-                          );
-                        }).toList(),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Select Category',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 16),
+                            Flexible(
+                              child: ListView(
+                                shrinkWrap: true,
+                                children: categories.map((cat) {
+                                  return ListTile(
+                                    leading: Icon(cat.icon, color: cat.color),
+                                    title: Text(cat.name),
+                                    onTap: () => Navigator.pop(context, cat.id),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     );
                     if (selected != null) setState(() => _categoryId = selected);
                   },
-                  child: Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade400),
-                      color: Colors.grey.shade100,
+                  child: InputDecorator(
+                    decoration: InputDecoration(
+                      labelText: 'Category',
+                      border: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.arrow_drop_down),
                     ),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
+                        if (_categoryId != null) ...[
+                          Icon(
+                            categories.firstWhere((c) => c.id == _categoryId).icon,
+                            color: categories.firstWhere((c) => c.id == _categoryId).color,
+                            size: 20,
+                          ),
+                          SizedBox(width: 8),
+                        ],
                         Text(
                           _categoryId != null
                               ? categories.firstWhere((c) => c.id == _categoryId).name
                               : "Select Category",
                           style: TextStyle(fontSize: 16),
                         ),
-                        Icon(Icons.arrow_drop_down, color: Colors.grey[700]),
                       ],
                     ),
                   ),
@@ -167,52 +266,64 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
                 SizedBox(height: 16),
 
-                // Note field
-                TextFormField(
-                  controller: _noteController,
-                  decoration: InputDecoration(labelText: 'Note'),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) return 'Please enter a note';
-                    return null;
-                  },
+                // Date & Time picker - styled like bill screen
+                InkWell(
+                  onTap: _pickDateTime,
+                  child: InputDecorator(
+                    decoration: InputDecoration(
+                      labelText: 'Date & Time',
+                      border: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.access_time),
+                    ),
+                    child: Text(
+                      DateFormat('MMM d, yyyy hh:mm a').format(
+                        DateTime(
+                          _selectedDate.year,
+                          _selectedDate.month,
+                          _selectedDate.day,
+                          _selectedTime.hour,
+                          _selectedTime.minute,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
 
                 SizedBox(height: 16),
 
-                // Date & Time picker
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Icon(Icons.access_time, color: Colors.blue),
-                  title: Text("Date & Time", style: TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text(
-                    DateFormat('MMM d, yyyy hh:mm a').format(
-                      DateTime(
-                        _selectedDate.year,
-                        _selectedDate.month,
-                        _selectedDate.day,
-                        _selectedTime.hour,
-                        _selectedTime.minute,
-                      ),
-                    ),
+                // Note field - styled like bill screen
+                TextFormField(
+                  controller: _noteController,
+                  decoration: InputDecoration(
+                    labelText: 'Note',
+                    hintText: 'Add a description for this transaction...',
+                    border: OutlineInputBorder(),
                   ),
-                  trailing: Icon(Icons.edit, color: Colors.grey),
-                  onTap: _pickDateTime,
+                  maxLines: 3,
+                  textInputAction: TextInputAction.newline,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter a note';
+                    }
+                    return null;
+                  },
                 ),
 
                 SizedBox(height: 32),
 
-                // Save Transaction button
-                Center(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    onPressed: _saveTransaction,
-                    child: Text('Save Transaction'),
+                // Save button - styled like bill screen
+                ElevatedButton(
+                  onPressed: _saveTransaction,
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  child: Text(
+                    isEditing ? 'Update Transaction' : 'Save Transaction',
+                    style: TextStyle(fontSize: 16),
                   ),
                 ),
               ],
@@ -247,36 +358,44 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   }
 
   Future<void> _saveTransaction() async {
-    if (_formKey.currentState!.validate()) {
-      double amount = double.parse(_amountController.text);
+    if (!_formKey.currentState!.validate()) return;
 
-      final data = {
-        'amount': amount,
-        'type': _type,
-        'categoryId': _categoryId,
-        'date': DateTime(
-          _selectedDate.year,
-          _selectedDate.month,
-          _selectedDate.day,
-          _selectedTime.hour,
-          _selectedTime.minute,
-        ).toIso8601String(),
-        'note': _noteController.text,
-      };
+    double amount = double.parse(_amountController.text);
 
-      if (widget.transaction != null) {
+    final data = {
+      'amount': amount,
+      'type': _type,
+      'categoryId': _categoryId,
+      'date': DateTime(
+        _selectedDate.year,
+        _selectedDate.month,
+        _selectedDate.day,
+        _selectedTime.hour,
+        _selectedTime.minute,
+      ).toIso8601String(),
+      'note': _noteController.text.trim(),
+    };
+
+    try {
+      if (isEditing) {
         // Update existing transaction
         await db.update('transactions', widget.transaction!['id'], data);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Transaction updated successfully')),
+        );
       } else {
         // Insert new transaction
         await db.insert('transactions', data);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Transaction added successfully')),
+        );
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Transaction saved!')),
-      );
-
       Navigator.pop(context, true);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error saving transaction: $e')),
+      );
     }
   }
 }

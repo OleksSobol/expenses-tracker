@@ -6,7 +6,7 @@ import '../services/bill_service.dart';
 class AddBillScreen extends StatefulWidget {
   final Bill? bill; // null for new bill, Bill object for editing
 
-  const AddBillScreen({Key? key, this.bill}) : super(key: key);
+  const AddBillScreen({super.key, this.bill});
 
   @override
   _AddBillScreenState createState() => _AddBillScreenState();
@@ -201,7 +201,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
                 SizedBox(height: 16),
                 
                 DropdownButtonFormField<String>(
-                  value: _frequency,
+                  initialValue: _frequency,
                   decoration: InputDecoration(
                     labelText: 'Frequency',
                     border: OutlineInputBorder(),

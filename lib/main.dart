@@ -10,6 +10,8 @@ void main() {
 }
 
 class ExpensesTrackerApp extends StatefulWidget {
+  const ExpensesTrackerApp({super.key});
+
   @override
   _MyAppState createState() => _MyAppState();
 }
@@ -85,7 +87,7 @@ class _MyAppState extends State<ExpensesTrackerApp> {
 class MainNavigation extends StatefulWidget {
   final Function(ThemeMode) onThemeChanged;
 
-  const MainNavigation({Key? key, required this.onThemeChanged}) : super(key: key);
+  const MainNavigation({super.key, required this.onThemeChanged});
 
   @override
   _MainNavigationState createState() => _MainNavigationState();
