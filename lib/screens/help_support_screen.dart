@@ -72,11 +72,6 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
 
   final deviceInfo = await _getDeviceInfo();
 
-  final subject = Uri.encodeComponent('Expenses Tracker - $_selectedSubject');
-  final body = Uri.encodeComponent(
-    '${_messageController.text}\n$deviceInfo\n\n--- Contact Info ---\nEmail: (please add your email)'
-  );
-
   final emailUri = Uri(
     scheme: 'mailto',
     path: 'support@expensestracker.com',
