@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../models/bill.dart';
 import '../services/bill_service.dart';
 import 'add_bill_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 
 
 class BillsScreen extends StatefulWidget {
@@ -54,6 +56,37 @@ class _BillsScreenState extends State<BillsScreen> with TickerProviderStateMixin
       );
     }
   }
+
+  Future<void> _launchBillLink(String url) async {
+  try {
+    // Add https if missing
+    if (!url.startsWith(RegExp(r'https?://'))) {
+      url = 'https://$url';
+    }
+
+    final uri = Uri.parse(url);
+
+    if (await canLaunchUrl(uri)) {
+      // Use externalApplication to ensure a browser is opened
+      await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Cannot open this link on your device.')),
+      );
+    }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error opening link: $e')),
+    );
+  }
+}
+
+
+
+
 
   Color _getDueColor(Bill bill) {
     if (bill.isPaid) return Colors.green;
@@ -422,8 +455,15 @@ class _BillsScreenState extends State<BillsScreen> with TickerProviderStateMixin
                           size: 16,
                           color: const Color.fromARGB(255, 117, 117, 117),
                         ),
+                      if (bill.link != null && bill.link!.isNotEmpty)
+                        IconButton(
+                          icon: Icon(Icons.link, size: 18, color: Colors.blue),
+                          tooltip: 'Open Link',
+                          onPressed: () => _launchBillLink(bill.link!),
+                        ),
                     ],
                   ),
+
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

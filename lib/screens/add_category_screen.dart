@@ -62,6 +62,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
     Icons.savings,
     Icons.credit_card,
     Icons.attach_money,
+    Icons.money_off,
     Icons.trending_up,
     Icons.business,
     Icons.work,

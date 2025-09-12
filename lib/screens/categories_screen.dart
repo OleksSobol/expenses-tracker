@@ -239,127 +239,14 @@ Future<void> _deleteCategory(Category category) async {
           backgroundColor: Colors.green,
         ),
       );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to delete category'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete category'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
-}
-
-
-// Check if category is being used by any transactions
-Future<bool> _isCategoryInUse(int categoryId) async {
-  // Replace this with your actual transaction checking logic
-  // This assumes you have a transactions list or service
-  
-  // Example if you have a global transactions list:
-  // return transactions.any((transaction) => transaction.categoryId == categoryId);
-  
-  // Example if you have a TransactionService:
-  // return await TransactionService.isCategoryInUse(categoryId);
-  
-  // Placeholder - replace with your actual logic
-  return false; // Change this based on your transaction storage
-}
-
-// Dialog to reassign transactions to another category
-Future<void> _showReassignDialog(Category categoryToDelete) async {
-  Category? selectedCategory;
-  
-  final result = await showDialog<bool>(
-    context: context,
-    builder: (context) => StatefulBuilder(
-      builder: (context, setDialogState) => AlertDialog(
-        title: Text('Reassign Transactions'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Select a new category for transactions currently using "${categoryToDelete.name}":'),
-            SizedBox(height: 16),
-            DropdownButton<Category>(
-              isExpanded: true,
-              value: selectedCategory,
-              hint: Text('Choose new category'),
-              items: categories
-                  .where((c) => c.id != categoryToDelete.id)
-                  .map((category) => DropdownMenuItem(
-                        value: category,
-                        child: Row(
-                          children: [
-                            Icon(category.icon, color: category.color, size: 20),
-                            SizedBox(width: 8),
-                            Text(category.name),
-                          ],
-                        ),
-                      ))
-                  .toList(),
-              onChanged: (Category? value) {
-                setDialogState(() {
-                  selectedCategory = value;
-                });
-              },
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: selectedCategory == null 
-                ? null 
-                : () => Navigator.pop(context, true),
-            child: Text('Reassign & Delete'),
-          ),
-        ],
-      ),
-    ),
-  );
-
-  if (result == true && selectedCategory != null) {
-    try {
-      // Reassign all transactions from old category to new category
-      await _reassignTransactions(categoryToDelete.id!, selectedCategory!.id!);
-      
-      // Now delete the old category
-      await CategoryService.deleteCategory(categoryToDelete.id!);
-      setState(() {});
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Transactions reassigned and category deleted'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to reassign transactions'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-}
-}
-
-// Reassign transactions from one category to another
-Future<void> _reassignTransactions(int oldCategoryId, int newCategoryId) async {
-  // Replace this with your actual transaction reassignment logic
-  
-  // Example if you have a global transactions list:
-  // for (var transaction in transactions) {
-  //   if (transaction.categoryId == oldCategoryId) {
-  //     transaction.categoryId = newCategoryId;
-  //   }
-  // }
-  // await TransactionService.saveTransactions();
-  
-  // Example if you have a TransactionService:
-  // await TransactionService.reassignCategory(oldCategoryId, newCategoryId);
 }

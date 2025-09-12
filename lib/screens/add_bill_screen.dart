@@ -21,6 +21,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
   late TextEditingController _notesController;
   late DateTime _nextDueDate;
   late String _frequency;
+  late TextEditingController _linkController;
 
   bool get isEditing => widget.bill != null;
 
@@ -35,6 +36,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
     _notesController = TextEditingController(text: widget.bill?.notes ?? '');
     _nextDueDate = widget.bill?.nextDueDate ?? DateTime.now().add(Duration(days: 30));
     _frequency = widget.bill?.frequency ?? 'monthly';
+    _linkController = TextEditingController(text: widget.bill?.link ?? '');
   }
 
   @override
@@ -75,6 +77,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
       nextDueDate: _nextDueDate,
       frequency: _frequency,
       notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+      link: _linkController.text.trim().isEmpty ? null : _linkController.text.trim(),
     );
 
     try {
@@ -233,7 +236,31 @@ class _AddBillScreenState extends State<AddBillScreen> {
                   maxLines: 3,
                   textInputAction: TextInputAction.newline,
                 ),
-                
+               
+                SizedBox(height: 16),
+
+                TextFormField(
+                  controller: _linkController,
+                  decoration: InputDecoration(
+                    labelText: 'Bill Link (Optional)',
+                    hintText: 'https://example.com',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.link),
+                  ),
+                  keyboardType: TextInputType.url,
+                  textInputAction: TextInputAction.done,
+                  validator: (value) {
+                    if (value != null && value.isNotEmpty) {
+                      final urlPattern = r'^https?:\/\/[^\s]+$';
+                      final regExp = RegExp(urlPattern);
+                      if (!regExp.hasMatch(value.trim())) {
+                        return 'Enter a valid URL starting with http:// or https://';
+                      }
+                    }
+                    return null;
+                  },
+                ),
+
                 SizedBox(height: 32),
                 
                 ElevatedButton(

@@ -33,13 +33,15 @@ class Category {
 List<Category> categories = [];
 
 // Default categories to use on first app launch
+
+// TODO: Everytime app restarts these replacing all new categories
+
 List<Category> getDefaultCategories() {
   return [
     Category(id: 1, name: 'Food', icon: Icons.fastfood, color: Colors.orange),
     Category(id: 2, name: 'Transport', icon: Icons.directions_bus, color: Colors.blue),
-    Category(id: 3, name: 'Shopping', icon: Icons.shopping_bag, color: Colors.purple),
-    Category(id: 4, name: 'Salary', icon: Icons.attach_money, color: Colors.green),
-    Category(id: 5, name: 'Bills', icon: Icons.money_off, color: Colors.red),
+    Category(id: 3, name: 'Salary', icon: Icons.attach_money, color: Colors.green),
+    Category(id: 4, name: 'Bills', icon: Icons.money_off, color: Colors.red),
   ];
 }
 
@@ -58,8 +60,7 @@ class CategoryService {
         categories = categoriesJson.map((json) => Category.fromMap(json)).toList();
       } catch (e) {
         print('Error loading categories: $e');
-        categories = getDefaultCategories();
-        await saveCategories(); // Save defaults
+        categories = [];
       }
     } else {
       // First time - use defaults

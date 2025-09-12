@@ -47,7 +47,8 @@ class DBService {
             categoryId INTEGER,
             notes TEXT,
             lastPaidDate TEXT,
-            isPaid INTEGER NOT NULL DEFAULT 0
+            isPaid INTEGER NOT NULL DEFAULT 0,
+            link TEXT
           )
         ''');
 

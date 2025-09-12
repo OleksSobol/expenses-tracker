@@ -10,6 +10,7 @@ class Bill {
   final String? notes;
   final DateTime? lastPaidDate;
   final bool isPaid; // whether current period is paid
+  final String? link;
 
   Bill({
     this.id,
@@ -22,6 +23,7 @@ class Bill {
     this.notes,
     this.lastPaidDate,
     this.isPaid = false,
+    this.link,
   });
 
   // Convert from database map
@@ -39,6 +41,7 @@ class Bill {
           ? DateTime.parse(map['lastPaidDate'] as String)
           : null,
       isPaid: (map['isPaid'] as int?) == 1,
+      link: map['link'] as String?, 
     );
   }
 
@@ -55,6 +58,7 @@ class Bill {
       if (notes != null) 'notes': notes,
       if (lastPaidDate != null) 'lastPaidDate': lastPaidDate!.toIso8601String(),
       'isPaid': isPaid ? 1 : 0,
+      if (link != null) 'link': link,
     };
   }
 
@@ -70,6 +74,7 @@ class Bill {
     String? notes,
     DateTime? lastPaidDate,
     bool? isPaid,
+    String? link,
   }) {
     return Bill(
       id: id ?? this.id,
@@ -82,6 +87,7 @@ class Bill {
       notes: notes ?? this.notes,
       lastPaidDate: lastPaidDate ?? this.lastPaidDate,
       isPaid: isPaid ?? this.isPaid,
+      link: link ?? this.link, 
     );
   }
 
