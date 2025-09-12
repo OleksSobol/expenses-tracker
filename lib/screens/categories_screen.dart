@@ -92,11 +92,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   Widget _buildCategoryCard(Category category) {
   return Dismissible(
     key: Key(category.id.toString()),
-
-    // Allow only swipe from right to left
     direction: DismissDirection.endToStart,
-
-    // Background when swiping (same as Bills)
     background: Container(
       color: Colors.red,
       alignment: Alignment.centerRight,
@@ -105,7 +101,6 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     ),
 
     confirmDismiss: (direction) async {
-      // Ask for confirmation (reuse your _deleteCategory dialog logic)
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
@@ -127,11 +122,10 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           ],
         ),
       );
+      if (confirmed == true) {
+        await _deleteCategory(category);
+      }
       return confirmed ?? false;
-    },
-
-    onDismissed: (direction) {
-      _deleteCategory(category);
     },
 
     child: Card(
@@ -199,29 +193,6 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   }
 
 Future<void> _deleteCategory(Category category) async {
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: Text('Delete Category'),
-      content: Text(
-        'Deleting "${category.name}" will also delete all transactions in this category.\n\n'
-        'This action cannot be undone.',
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context, false),
-          child: Text('Cancel'),
-        ),
-        TextButton(
-          onPressed: () => Navigator.pop(context, true),
-          style: TextButton.styleFrom(foregroundColor: Colors.red),
-          child: Text('Delete'),
-        ),
-      ],
-    ),
-  );
-
-  if (confirmed == true) {
     try {
       // delete all transactions first
       final txService = TransactionService();
@@ -234,9 +205,6 @@ Future<void> _deleteCategory(Category category) async {
 
       // then delete the category
       await CategoryService.deleteCategory(category.id!);
-
-      setState(() {}); // refresh UI
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -255,4 +223,3 @@ Future<void> _deleteCategory(Category category) async {
       }
     }
   }
-}

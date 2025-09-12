@@ -171,6 +171,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 ValueListenableBuilder<List<Category>>(
                   valueListenable: categoriesNotifier,
                   builder: (context, categories, _) {
+                    if (_categoryId == null && categories.isNotEmpty) {
+                      _categoryId = categories.first.id;
+                    }
                     return InkWell(
                       onTap: () async {
                         final selected = await showModalBottomSheet<int>(
