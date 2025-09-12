@@ -244,6 +244,31 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     );
                   },
                 ),
+                SizedBox(height: 16),
+
+                // Date & Time picker
+                InkWell(
+                  onTap: _pickDateTime,
+                  child: InputDecorator(
+                    decoration: InputDecoration(
+                      labelText: 'Date & Time',
+                      border: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.calendar_today),
+                    ),
+                    child: Text(
+                      DateFormat('MM/dd/yyyy hh:mm a').format(
+                        DateTime(
+                          _selectedDate.year,
+                          _selectedDate.month,
+                          _selectedDate.day,
+                          _selectedTime.hour,
+                          _selectedTime.minute,
+                        ),
+                      ),
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
+                ),
 
                 SizedBox(height: 16),
 
