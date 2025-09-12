@@ -4,8 +4,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/home_screen.dart';
 import 'screens/bills_screen.dart';
 import 'screens/settings_screen.dart';
+import 'models/category.dart';
 
-void main() {
+void main() async {
+  // Ensure Flutter binding is initialized
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Load categories from storage before starting the app
+  await CategoryService.loadCategories();
+  
   runApp(ExpensesTrackerApp());
 }
 

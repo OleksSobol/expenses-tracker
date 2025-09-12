@@ -1,6 +1,7 @@
 // screens/categories_screen.dart
 import 'package:flutter/material.dart';
 import '../models/category.dart';
+import '../services/transaction_service.dart';
 import 'add_category_screen.dart';
 
 class CategoriesScreen extends StatefulWidget {
@@ -83,7 +84,51 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   }
 
   Widget _buildCategoryCard(Category category) {
-    return Card(
+  return Dismissible(
+    key: Key(category.id.toString()),
+
+    // Allow only swipe from right to left
+    direction: DismissDirection.endToStart,
+
+    // Background when swiping (same as Bills)
+    background: Container(
+      color: Colors.red,
+      alignment: Alignment.centerRight,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: const Icon(Icons.delete, color: Colors.white),
+    ),
+
+    confirmDismiss: (direction) async {
+      // Ask for confirmation (reuse your _deleteCategory dialog logic)
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Delete Category'),
+          content: Text(
+            'Deleting "${category.name}" will also delete all transactions in this category.\n\n'
+            'This action cannot be undone.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: Text('Delete'),
+            ),
+          ],
+        ),
+      );
+      return confirmed ?? false;
+    },
+
+    onDismissed: (direction) {
+      _deleteCategory(category);
+    },
+
+    child: Card(
       margin: EdgeInsets.only(bottom: 12),
       elevation: 2,
       child: ListTile(
@@ -92,7 +137,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: category.color.withOpacity(0.1),
+            color: category.color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(24),
           ),
           child: Icon(
@@ -108,13 +153,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        subtitle: Text(
-          'Tap to edit',
-          style: TextStyle(
-            color: Colors.grey.shade600,
-            fontSize: 14,
-          ),
-        ),
+
         trailing: Icon(
           Icons.arrow_forward_ios,
           color: Colors.grey.shade400,
@@ -122,8 +161,10 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         ),
         onTap: () => _editCategory(category),
       ),
-    );
-  }
+    ),
+  );
+}
+
 
   Future<void> _addCategory() async {
     final result = await Navigator.push(
@@ -150,4 +191,175 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       setState(() {}); // Refresh the list
     }
   }
+
+Future<void> _deleteCategory(Category category) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text('Delete Category'),
+      content: Text(
+        'Deleting "${category.name}" will also delete all transactions in this category.\n\n'
+        'This action cannot be undone.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, true),
+          style: TextButton.styleFrom(foregroundColor: Colors.red),
+          child: Text('Delete'),
+        ),
+      ],
+    ),
+  );
+
+  if (confirmed == true) {
+    try {
+      // delete all transactions first
+      final txService = TransactionService();
+      final allTx = await txService.getAllTransactions();
+      for (var tx in allTx) {
+        if (tx['categoryId'] == category.id) {
+          await txService.deleteTransaction(tx['id']);
+        }
+      }
+
+      // then delete the category
+      await CategoryService.deleteCategory(category.id!);
+
+      setState(() {}); // refresh UI
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Category "${category.name}" and related transactions deleted',
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to delete category'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+}
+
+
+// Check if category is being used by any transactions
+Future<bool> _isCategoryInUse(int categoryId) async {
+  // Replace this with your actual transaction checking logic
+  // This assumes you have a transactions list or service
+  
+  // Example if you have a global transactions list:
+  // return transactions.any((transaction) => transaction.categoryId == categoryId);
+  
+  // Example if you have a TransactionService:
+  // return await TransactionService.isCategoryInUse(categoryId);
+  
+  // Placeholder - replace with your actual logic
+  return false; // Change this based on your transaction storage
+}
+
+// Dialog to reassign transactions to another category
+Future<void> _showReassignDialog(Category categoryToDelete) async {
+  Category? selectedCategory;
+  
+  final result = await showDialog<bool>(
+    context: context,
+    builder: (context) => StatefulBuilder(
+      builder: (context, setDialogState) => AlertDialog(
+        title: Text('Reassign Transactions'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Select a new category for transactions currently using "${categoryToDelete.name}":'),
+            SizedBox(height: 16),
+            DropdownButton<Category>(
+              isExpanded: true,
+              value: selectedCategory,
+              hint: Text('Choose new category'),
+              items: categories
+                  .where((c) => c.id != categoryToDelete.id)
+                  .map((category) => DropdownMenuItem(
+                        value: category,
+                        child: Row(
+                          children: [
+                            Icon(category.icon, color: category.color, size: 20),
+                            SizedBox(width: 8),
+                            Text(category.name),
+                          ],
+                        ),
+                      ))
+                  .toList(),
+              onChanged: (Category? value) {
+                setDialogState(() {
+                  selectedCategory = value;
+                });
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: selectedCategory == null 
+                ? null 
+                : () => Navigator.pop(context, true),
+            child: Text('Reassign & Delete'),
+          ),
+        ],
+      ),
+    ),
+  );
+
+  if (result == true && selectedCategory != null) {
+    try {
+      // Reassign all transactions from old category to new category
+      await _reassignTransactions(categoryToDelete.id!, selectedCategory!.id!);
+      
+      // Now delete the old category
+      await CategoryService.deleteCategory(categoryToDelete.id!);
+      setState(() {});
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Transactions reassigned and category deleted'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to reassign transactions'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+}
+}
+
+// Reassign transactions from one category to another
+Future<void> _reassignTransactions(int oldCategoryId, int newCategoryId) async {
+  // Replace this with your actual transaction reassignment logic
+  
+  // Example if you have a global transactions list:
+  // for (var transaction in transactions) {
+  //   if (transaction.categoryId == oldCategoryId) {
+  //     transaction.categoryId = newCategoryId;
+  //   }
+  // }
+  // await TransactionService.saveTransactions();
+  
+  // Example if you have a TransactionService:
+  // await TransactionService.reassignCategory(oldCategoryId, newCategoryId);
 }

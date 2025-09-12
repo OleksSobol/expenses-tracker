@@ -6,7 +6,6 @@ import '../widgets/transaction_list_item.dart';
 import '../widgets/transaction_summary.dart';
 import '../services/transaction_service.dart';
 import 'add_transaction_screen.dart';
-import 'categories_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -66,25 +65,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _openCategoriesScreen() async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => CategoriesScreen()),
-    );
-    if (result == true) {
-      setState(() {}); // Refresh to update category filters
-    }
-  }
 
-  String _getSortLabel() {
-    switch (_filter.sortBy) {
-      case 'date_desc': return 'Date ↓';
-      case 'date_asc': return 'Date ↑';
-      case 'amount_desc': return 'Amount ↓';
-      case 'amount_asc': return 'Amount ↑';
-      default: return 'Sort';
-    }
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -124,9 +106,11 @@ class _HomeScreenState extends State<HomeScreen> {
           Container(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.grey.shade50,
+              color: Theme.of(context).colorScheme.surface,
               border: Border(
-                bottom: BorderSide(color: Colors.grey.shade200, width: 1),
+                bottom: BorderSide(
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12), 
+                  width: 1),
               ),
             ),
             child: Column(
@@ -160,15 +144,18 @@ class _HomeScreenState extends State<HomeScreen> {
                       height: 32,
                       padding: EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.grey.shade300),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: .12)),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
                           value: _filter.sortBy,
                           isDense: true,
-                          style: TextStyle(fontSize: 13, color: Colors.black87),
+                          style: TextStyle(
+                            fontSize: 13, 
+                            color: Theme.of(context).colorScheme.onSurface),
                           items: [
                             DropdownMenuItem(value: 'date_desc', child: Text('Date ↓')),
                             DropdownMenuItem(value: 'date_asc', child: Text('Date ↑')),
@@ -257,17 +244,27 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildCompactFilterChip(String label, bool isSelected, VoidCallback onTap) {
+    final theme = Theme.of(context);
+    final backgroundColor = isSelected
+        ? theme.colorScheme.primary
+        : theme.colorScheme.surface; // <-- adapt to dark/light mode
+    final borderColor = isSelected
+        ? theme.colorScheme.primary
+        : theme.colorScheme.onSurface.withOpacity(0.12); // subtle border
+
+    final textColor = isSelected
+        ? theme.colorScheme.onPrimary
+        : theme.colorScheme.onSurface;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         height: 28,
         padding: EdgeInsets.symmetric(horizontal: 10),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.blue : Colors.white,
+          color: backgroundColor,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isSelected ? Colors.blue : Colors.grey.shade300,
-          ),
+          border: Border.all(color: borderColor),
         ),
         child: Center(
           child: Text(
@@ -275,7 +272,7 @@ class _HomeScreenState extends State<HomeScreen> {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: isSelected ? Colors.white : Colors.grey.shade700,
+              color: textColor,
             ),
           ),
         ),
@@ -284,7 +281,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildCompactCategoryChip(Category category) {
-    final isSelected = _filter.categoryId == category.id;
+  final isSelected = _filter.categoryId == category.id;
+    final theme = Theme.of(context);
+    final backgroundColor = isSelected
+        ? category.color.withOpacity(0.2)
+        : theme.colorScheme.surface;
+    final borderColor = isSelected
+        ? category.color
+        : theme.colorScheme.onSurface.withOpacity(0.12);
+    final textColor = isSelected ? category.color : theme.colorScheme.onSurface;
+
     return GestureDetector(
       onTap: () {
         _onFilterChanged(_filter.copyWith(categoryId: category.id));
@@ -293,10 +299,10 @@ class _HomeScreenState extends State<HomeScreen> {
         height: 28,
         padding: EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
-          color: isSelected ? category.color.withOpacity(0.2) : Colors.white,
+          color: backgroundColor,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isSelected ? category.color : Colors.grey.shade300,
+            color: borderColor,
           ),
         ),
         child: Row(
@@ -309,7 +315,7 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
-                color: isSelected ? category.color : Colors.grey.shade700,
+                color: textColor,
               ),
             ),
           ],

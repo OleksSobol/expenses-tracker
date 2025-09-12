@@ -6,7 +6,7 @@ import 'add_bill_screen.dart';
 
 
 class BillsScreen extends StatefulWidget {
-  const BillsScreen({super.key});
+  const BillsScreen({Key? key}) : super(key: key);
 
   @override
   _BillsScreenState createState() => _BillsScreenState();
@@ -16,7 +16,7 @@ class _BillsScreenState extends State<BillsScreen> with TickerProviderStateMixin
   final BillService _billService = BillService();
   List<Bill> _bills = [];
   bool _isLoading = true;
-  bool _showSwipeHint = true;
+  bool _showSwipeHint = false;
   late AnimationController _payAnimationController;
   int? _payingBillId;
 
@@ -271,8 +271,8 @@ class _BillsScreenState extends State<BillsScreen> with TickerProviderStateMixin
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _navigateToAddBill(),
-        tooltip: 'Add Bill',
         child: Icon(Icons.add),
+        tooltip: 'Add Bill',
       ),
       body: _isLoading
           ? Center(child: CircularProgressIndicator())
