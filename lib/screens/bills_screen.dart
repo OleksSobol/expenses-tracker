@@ -420,7 +420,7 @@ class _BillsScreenState extends State<BillsScreen> with TickerProviderStateMixin
                         Icon(
                           Icons.note,
                           size: 16,
-                          color: Colors.grey[600],
+                          color: const Color.fromARGB(255, 117, 117, 117),
                         ),
                     ],
                   ),
@@ -453,7 +453,9 @@ class _BillsScreenState extends State<BillsScreen> with TickerProviderStateMixin
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          color: bill.isPaid ? Colors.grey : Theme.of(context).primaryColor,
+                          color: bill.isPaid
+                              ? Theme.of(context).disabledColor       // lighter/disabled for paid bills
+                              : Theme.of(context).colorScheme.primary // adapts to light/dark theme
                         ),
                       ),
                       if (!bill.isPaid && !isPayingThis)
