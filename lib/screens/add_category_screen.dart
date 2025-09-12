@@ -1,6 +1,11 @@
 // screens/add_category_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_iconpicker/Models/configuration.dart';
 import '../models/category.dart';
+import 'package:flutter_iconpicker/flutter_iconpicker.dart';
+
+
+
 
 class AddCategoryScreen extends StatefulWidget {
   final Category? category; // null for new category, Category object for editing
@@ -15,59 +20,29 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   
+  Icon? _icon;
+
+  
   IconData _selectedIcon = Icons.category;
   Color _selectedColor = Colors.blue;
   
   bool get isEditing => widget.category != null;
 
-  // Available icons for categories
-  final List<IconData> _availableIcons = [
-    Icons.shopping_cart,
-    Icons.restaurant,
-    Icons.local_gas_station,
-    Icons.home,
-    Icons.car_rental,
-    Icons.medical_services,
-    Icons.school,
-    Icons.fitness_center,
-    Icons.movie,
-    Icons.shopping_bag,
-    Icons.phone,
-    Icons.electric_bolt,
-    Icons.water_drop,
-    Icons.wifi,
-    Icons.flight,
-    Icons.hotel,
-    Icons.coffee,
-    Icons.fastfood,
-    Icons.local_grocery_store,
-    Icons.local_pharmacy,
-    Icons.local_hospital,
-    Icons.directions_bus,
-    Icons.train,
-    Icons.local_taxi,
-    Icons.pets,
-    Icons.child_care,
-    Icons.sports_esports,
-    Icons.music_note,
-    Icons.book,
-    Icons.brush,
-    Icons.build,
-    Icons.cleaning_services,
-    Icons.computer,
-    Icons.phone_android,
-    Icons.headphones,
-    Icons.camera_alt,
-    Icons.account_balance,
-    Icons.savings,
-    Icons.credit_card,
-    Icons.attach_money,
-    Icons.money_off,
-    Icons.trending_up,
-    Icons.business,
-    Icons.work,
-    Icons.category,
-  ];
+  Future<void> _pickIcon() async {
+    final IconPickerIcon? pickedIcon = await showIconPicker(
+        context,
+        configuration: SinglePickerConfiguration(
+          iconPackModes: [IconPack.material],
+        ),
+    );
+
+    if (pickedIcon != null) {
+      setState(() {
+      _selectedIcon = pickedIcon.data;
+      });
+    }
+  }
+
 
   // Available colors for categories
   final List<Color> _availableColors = [
@@ -193,7 +168,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                           width: 50,
                           height: 50,
                           decoration: BoxDecoration(
-                            color: _selectedColor.withOpacity(0.1),
+                            color: _selectedColor.withValues(alpha: .1),
                             borderRadius: BorderRadius.circular(25),
                           ),
                           child: Icon(
@@ -272,52 +247,12 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                   ),
                 ),
                 SizedBox(height: 12),
-                Container(
-                  height: 200,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: GridView.builder(
-                    padding: EdgeInsets.all(12),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 6,
-                      crossAxisSpacing: 8,
-                      mainAxisSpacing: 8,
-                    ),
-                    itemCount: _availableIcons.length,
-                    itemBuilder: (context, index) {
-                      final icon = _availableIcons[index];
-                      final isSelected = _selectedIcon == icon;
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedIcon = icon;
-                          });
-                        },
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: isSelected 
-                                ? _selectedColor.withOpacity(0.2)
-                                : Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: isSelected 
-                                  ? _selectedColor 
-                                  : Colors.grey.shade300,
-                              width: 2,
-                            ),
-                          ),
-                          child: Icon(
-                            icon,
-                            color: isSelected ? _selectedColor : Colors.grey.shade600,
-                            size: 24,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                ElevatedButton.icon(
+                  onPressed: _pickIcon,
+                  icon: Icon(_selectedIcon, color: _selectedColor),
+                  label: Text('Pick Icon'),
                 ),
+
 
                 SizedBox(height: 24),
 
