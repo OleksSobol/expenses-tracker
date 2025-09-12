@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/db_service.dart';
 import '../models/category.dart';
 import 'package:intl/intl.dart';
+import '../utils/custom_buttons.dart';
 
 class AddTransactionScreen extends StatefulWidget {
   final Map<String, dynamic>? transaction;
@@ -138,53 +139,67 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                         padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                         child: Row(
                           children: [
-                            Expanded(
-                              child: ChoiceChip(
-                                label: Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 8),
-                                  child: Text(
-                                    "Expense",
-                                    style: TextStyle(
-                                      color: _type == 'expense' ? Colors.white : Colors.red,
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 14,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                                selected: _type == 'expense',
-                                selectedColor: Colors.red,
-                                backgroundColor: Colors.red.shade50,
-                                onSelected: (_) => setState(() => _type = 'expense'),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
+                            buildTransactionTypeButton(
+                              context: context,
+                              label: "Expense",
+                              color: Colors.red,
+                              isSelected: _type == 'expense',
+                              onTap: () => setState(() => _type = 'expense'),
                             ),
+                            // Expanded(
+                            //   child: ChoiceChip(
+                            //     label: Padding(
+                            //       padding: const EdgeInsets.symmetric(vertical: 8),
+                            //       child: Text(
+                            //         "Expense",
+                            //         style: TextStyle(
+                            //           color: _type == 'expense' ? Colors.white : Colors.red,
+                            //           fontWeight: FontWeight.w500,
+                            //           fontSize: 14,
+                            //         ),
+                            //         textAlign: TextAlign.center,
+                            //       ),
+                            //     ),
+                            //     selected: _type == 'expense',
+                            //     selectedColor: Colors.red,
+                            //     backgroundColor: Colors.red.shade50,
+                            //     onSelected: (_) => setState(() => _type = 'expense'),
+                            //     shape: RoundedRectangleBorder(
+                            //       borderRadius: BorderRadius.circular(8),
+                            //     ),
+                            //   ),
+                            // ),
                             SizedBox(width: 12),
-                            Expanded(
-                              child: ChoiceChip(
-                                label: Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 8),
-                                  child: Text(
-                                    "Income",
-                                    style: TextStyle(
-                                      color: _type == 'income' ? Colors.white : Colors.green,
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 14,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                                selected: _type == 'income',
-                                selectedColor: Colors.green,
-                                backgroundColor: Colors.green.shade50,
-                                onSelected: (_) => setState(() => _type = 'income'),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
+                            buildTransactionTypeButton(
+                              context: context,
+                              label: "Income",
+                              color: Colors.green,
+                              isSelected: _type == 'income',
+                              onTap: () => setState(() => _type = 'income'),
                             ),
+                            // Expanded(
+                            //   child: ChoiceChip(
+                            //     label: Padding(
+                            //       padding: const EdgeInsets.symmetric(vertical: 8),
+                            //       child: Text(
+                            //         "Income",
+                            //         style: TextStyle(
+                            //           color: _type == 'income' ? Colors.white : Colors.green,
+                            //           fontWeight: FontWeight.w500,
+                            //           fontSize: 14,
+                            //         ),
+                            //         textAlign: TextAlign.center,
+                            //       ),
+                            //     ),
+                            //     selected: _type == 'income',
+                            //     selectedColor: Colors.green,
+                            //     backgroundColor: Colors.green.shade50,
+                            //     onSelected: (_) => setState(() => _type = 'income'),
+                            //     shape: RoundedRectangleBorder(
+                            //       borderRadius: BorderRadius.circular(8),
+                            //     ),
+                            //   ),
+                            // ),
                           ],
                         ),
                       ),
