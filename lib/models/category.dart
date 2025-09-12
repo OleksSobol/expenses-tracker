@@ -30,7 +30,7 @@ class Category {
 }
 
 // Global list - will be loaded from storage
-List<Category> categories = [];
+ValueNotifier<List<Category>> categoriesNotifier = ValueNotifier([]);
 
 // Default categories to use on first app launch
 
@@ -57,14 +57,14 @@ class CategoryService {
     if (categoriesString != null && categoriesString.isNotEmpty) {
       try {
         final List<dynamic> categoriesJson = jsonDecode(categoriesString);
-        categories = categoriesJson.map((json) => Category.fromMap(json)).toList();
+        categoriesNotifier.value = categoriesJson.map((json) => Category.fromMap(json)).toList();
       } catch (e) {
         print('Error loading categories: $e');
-        categories = [];
+        categoriesNotifier.value = [];
       }
     } else {
       // First time - use defaults
-      categories = getDefaultCategories();
+      categoriesNotifier.value = getDefaultCategories();
       await saveCategories();
     }
   }
@@ -73,7 +73,7 @@ class CategoryService {
   static Future<void> saveCategories() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final categoriesJson = categories.map((c) => c.toMap()).toList();
+      final categoriesJson = categoriesNotifier.value.map((c) => c.toMap()).toList();
       await prefs.setString(_categoriesKey, jsonEncode(categoriesJson));
     } catch (e) {
       print('Error saving categories: $e');
@@ -84,8 +84,8 @@ class CategoryService {
   static Future<void> addCategory(Category category) async {
     // Generate new ID
     int newId = 1;
-    if (categories.isNotEmpty) {
-      newId = categories.map((c) => c.id ?? 0).reduce((a, b) => a > b ? a : b) + 1;
+    if (categoriesNotifier.value.isNotEmpty) {
+      newId = categoriesNotifier.value.map((c) => c.id ?? 0).reduce((a, b) => a > b ? a : b) + 1;
     }
     
     final newCategory = Category(
@@ -95,29 +95,25 @@ class CategoryService {
       color: category.color,
     );
     
-    categories.add(newCategory);
+    categoriesNotifier.value = [...categoriesNotifier.value, newCategory];
     await saveCategories();
   }
 
-  // Update existing category
   static Future<void> updateCategory(Category updatedCategory) async {
-    final index = categories.indexWhere((c) => c.id == updatedCategory.id);
-    if (index != -1) {
-      categories[index] = updatedCategory;
-      await saveCategories();
-    }
+    final newList = categoriesNotifier.value.map((c) => c.id == updatedCategory.id ? updatedCategory : c).toList();
+    categoriesNotifier.value = newList;
+    await saveCategories();
   }
 
-  // Delete category
   static Future<void> deleteCategory(int categoryId) async {
-    categories.removeWhere((c) => c.id == categoryId);
+    categoriesNotifier.value = categoriesNotifier.value.where((c) => c.id != categoryId).toList();
     await saveCategories();
   }
 
   // Get category by ID
   static Category? getCategoryById(int id) {
     try {
-      return categories.firstWhere((c) => c.id == id);
+      return categoriesNotifier.value.firstWhere((c) => c.id == id);
     } catch (e) {
       return null;
     }

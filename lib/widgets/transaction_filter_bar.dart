@@ -46,33 +46,37 @@ class TransactionFilterBar extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildCategoryFilter() {
     return Flexible(
       flex: 4,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            ChoiceChip(
-              label: const Text('All Categories'),
-              selected: filter.categoryId == null,
-              onSelected: (_) => onFilterChanged(filter.clearCategory()),
-            ),
-            const SizedBox(width: 8),
-            ...categories.map((cat) => Padding(
-              padding: const EdgeInsets.only(right: 8.0),
-              child: ChoiceChip(
-                label: Text(cat.name),
-                selected: filter.categoryId == cat.id,
-                avatar: Icon(cat.icon, size: 18, color: cat.color),
-                selectedColor: cat.color.withOpacity(0.3),
-                onSelected: (_) => onFilterChanged(
-                  filter.copyWith(categoryId: cat.id)
+        child: ValueListenableBuilder<List<Category>>(
+          valueListenable: categoriesNotifier,
+          builder: (context, categories, _) {
+            return Row(
+              children: [
+                ChoiceChip(
+                  label: const Text('All Categories'),
+                  selected: filter.categoryId == null,
+                  onSelected: (_) => onFilterChanged(filter.clearCategory()),
                 ),
-              ),
-            )),
-          ],
+                const SizedBox(width: 8),
+                ...categories.map((cat) => Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: ChoiceChip(
+                    label: Text(cat.name),
+                    selected: filter.categoryId == cat.id,
+                    avatar: Icon(cat.icon, size: 18, color: cat.color),
+                    selectedColor: cat.color.withOpacity(0.3),
+                    onSelected: (_) => onFilterChanged(
+                      filter.copyWith(categoryId: cat.id),
+                    ),
+                  ),
+                )),
+              ],
+            );
+          },
         ),
       ),
     );

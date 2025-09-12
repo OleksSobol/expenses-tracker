@@ -23,6 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadTransactions();
+    _loadCategories();
   }
 
   Future<void> _loadTransactions() async {
@@ -30,6 +31,11 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _allTransactions = transactions;
     });
+  }
+
+  Future<void> _loadCategories() async {
+    await CategoryService.loadCategories();
+    setState(() {});
   }
 
   void _onFilterChanged(TransactionFilter newFilter) {
@@ -64,9 +70,6 @@ class _HomeScreenState extends State<HomeScreen> {
       _loadTransactions();
     }
   }
-
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -174,30 +177,67 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 
                 // Second row: Category filter (only if there are categories)
-                if (categories.isNotEmpty) ...[
-                  SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: [
-                              _buildCompactFilterChip('All Categories', _filter.categoryId == null, () {
-                                _onFilterChanged(_filter.clearCategory());
-                              }),
-                              SizedBox(width: 6),
-                              ...categories.map((cat) => Padding(
-                                padding: const EdgeInsets.only(right: 6.0),
-                                child: _buildCompactCategoryChip(cat),
-                              )),
-                            ],
-                          ),
+                // Second row: Category filter
+                ValueListenableBuilder<List<Category>>(
+                  valueListenable: categoriesNotifier,
+                  builder: (context, categoryList, _) {
+                    if (categoryList.isEmpty) return SizedBox();
+
+                    return Column(
+                      children: [
+                        SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  children: [
+                                    _buildCompactFilterChip(
+                                      'All Categories',
+                                      _filter.categoryId == null,
+                                      () => _onFilterChanged(_filter.clearCategory()),
+                                    ),
+                                    SizedBox(width: 6),
+                                    ...categoryList.map((cat) => Padding(
+                                          padding: const EdgeInsets.only(right: 6.0),
+                                          child: _buildCompactCategoryChip(cat),
+                                        )),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    );
+                  },
+                ),
+
+                // if (categories.isNotEmpty) ...[
+                //   SizedBox(height: 8),
+                //   Row(
+                //     children: [
+                //       Expanded(
+                //         child: SingleChildScrollView(
+                //           scrollDirection: Axis.horizontal,
+                //           child: Row(
+                //             children: [
+                //               _buildCompactFilterChip('All Categories', _filter.categoryId == null, () {
+                //                 _onFilterChanged(_filter.clearCategory());
+                //               }),
+                //               SizedBox(width: 6),
+                //               ...categories.map((cat) => Padding(
+                //                 padding: const EdgeInsets.only(right: 6.0),
+                //                 child: _buildCompactCategoryChip(cat),
+                //               )),
+                //             ],
+                //           ),
+                //         ),
+                //       ),
+                //     ],
+                //   ),
+                // ],
               ],
             ),
           ),
@@ -250,7 +290,7 @@ class _HomeScreenState extends State<HomeScreen> {
         : theme.colorScheme.surface; // <-- adapt to dark/light mode
     final borderColor = isSelected
         ? theme.colorScheme.primary
-        : theme.colorScheme.onSurface.withOpacity(0.12); // subtle border
+        : theme.colorScheme.onSurface.withValues(alpha: .12); // subtle border
 
     final textColor = isSelected
         ? theme.colorScheme.onPrimary
@@ -284,11 +324,11 @@ class _HomeScreenState extends State<HomeScreen> {
   final isSelected = _filter.categoryId == category.id;
     final theme = Theme.of(context);
     final backgroundColor = isSelected
-        ? category.color.withOpacity(0.2)
+        ? category.color.withValues(alpha: .2)
         : theme.colorScheme.surface;
     final borderColor = isSelected
         ? category.color
-        : theme.colorScheme.onSurface.withOpacity(0.12);
+        : theme.colorScheme.onSurface.withValues(alpha: .12);
     final textColor = isSelected ? category.color : theme.colorScheme.onSurface;
 
     return GestureDetector(

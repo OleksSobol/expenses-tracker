@@ -29,16 +29,22 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         child: Icon(Icons.add),
         tooltip: 'Add Category',
       ),
-      body: categories.isEmpty
-          ? _buildEmptyState()
-          : ListView.builder(
-              padding: EdgeInsets.all(16),
-              itemCount: categories.length,
-              itemBuilder: (context, index) {
-                final category = categories[index];
-                return _buildCategoryCard(category);
-              },
-            ),
+      body: ValueListenableBuilder<List<Category>>(
+        valueListenable: categoriesNotifier,
+        builder: (context, categories, _) {
+          if (categories.isEmpty) {
+            return _buildEmptyState();
+          }
+          return ListView.builder(
+            padding: EdgeInsets.all(16),
+            itemCount: categories.length,
+            itemBuilder: (context, index) {
+              final category = categories[index];
+              return _buildCategoryCard(category);
+            },
+          );
+        },
+      ),
     );
   }
 

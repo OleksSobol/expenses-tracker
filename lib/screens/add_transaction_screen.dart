@@ -20,7 +20,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   final _formKey = GlobalKey<FormState>();
 
   String _type = 'expense';
-  int? _categoryId = categories.first.id;
+  int? _categoryId;
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _selectedTime = TimeOfDay.now();
 
@@ -38,6 +38,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       DateTime dt = DateTime.parse(widget.transaction!['date']);
       _selectedDate = dt;
       _selectedTime = TimeOfDay(hour: dt.hour, minute: dt.minute);
+    }
+      if (_categoryId == null && categoriesNotifier.value.isNotEmpty) {
+          _categoryId = categoriesNotifier.value.first.id;
     }
   }
 
@@ -146,29 +149,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                               isSelected: _type == 'expense',
                               onTap: () => setState(() => _type = 'expense'),
                             ),
-                            // Expanded(
-                            //   child: ChoiceChip(
-                            //     label: Padding(
-                            //       padding: const EdgeInsets.symmetric(vertical: 8),
-                            //       child: Text(
-                            //         "Expense",
-                            //         style: TextStyle(
-                            //           color: _type == 'expense' ? Colors.white : Colors.red,
-                            //           fontWeight: FontWeight.w500,
-                            //           fontSize: 14,
-                            //         ),
-                            //         textAlign: TextAlign.center,
-                            //       ),
-                            //     ),
-                            //     selected: _type == 'expense',
-                            //     selectedColor: Colors.red,
-                            //     backgroundColor: Colors.red.shade50,
-                            //     onSelected: (_) => setState(() => _type = 'expense'),
-                            //     shape: RoundedRectangleBorder(
-                            //       borderRadius: BorderRadius.circular(8),
-                            //     ),
-                            //   ),
-                            // ),
                             SizedBox(width: 12),
                             buildTransactionTypeButton(
                               context: context,
@@ -177,29 +157,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                               isSelected: _type == 'income',
                               onTap: () => setState(() => _type = 'income'),
                             ),
-                            // Expanded(
-                            //   child: ChoiceChip(
-                            //     label: Padding(
-                            //       padding: const EdgeInsets.symmetric(vertical: 8),
-                            //       child: Text(
-                            //         "Income",
-                            //         style: TextStyle(
-                            //           color: _type == 'income' ? Colors.white : Colors.green,
-                            //           fontWeight: FontWeight.w500,
-                            //           fontSize: 14,
-                            //         ),
-                            //         textAlign: TextAlign.center,
-                            //       ),
-                            //     ),
-                            //     selected: _type == 'income',
-                            //     selectedColor: Colors.green,
-                            //     backgroundColor: Colors.green.shade50,
-                            //     onSelected: (_) => setState(() => _type = 'income'),
-                            //     shape: RoundedRectangleBorder(
-                            //       borderRadius: BorderRadius.circular(8),
-                            //     ),
-                            //   ),
-                            // ),
+
                           ],
                         ),
                       ),
@@ -209,99 +167,79 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
                 SizedBox(height: 16),
 
-                // Category selector - styled like bill screen dropdown
-                InkWell(
-                  onTap: () async {
-                    final selected = await showModalBottomSheet<int>(
-                      context: context,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-                      ),
-                      builder: (context) => Container(
-                        padding: EdgeInsets.all(16),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Select Category',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
+                // Category selector
+                ValueListenableBuilder<List<Category>>(
+                  valueListenable: categoriesNotifier,
+                  builder: (context, categories, _) {
+                    return InkWell(
+                      onTap: () async {
+                        final selected = await showModalBottomSheet<int>(
+                          context: context,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                          ),
+                          builder: (context) => Container(
+                            padding: EdgeInsets.all(16),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Select Category',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                SizedBox(height: 16),
+                                Flexible(
+                                  child: ListView(
+                                    shrinkWrap: true,
+                                    children: categories.map((cat) {
+                                      return ListTile(
+                                        leading: Icon(cat.icon, color: cat.color),
+                                        title: Text(cat.name),
+                                        onTap: () => Navigator.pop(context, cat.id),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              ],
                             ),
-                            SizedBox(height: 16),
-                            Flexible(
-                              child: ListView(
-                                shrinkWrap: true,
-                                children: categories.map((cat) {
-                                  return ListTile(
-                                    leading: Icon(cat.icon, color: cat.color),
-                                    title: Text(cat.name),
-                                    onTap: () => Navigator.pop(context, cat.id),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                  );
-                                }).toList(),
+                          ),
+                        );
+                        if (selected != null) setState(() => _categoryId = selected);
+                      },
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          labelText: 'Category',
+                          border: OutlineInputBorder(),
+                          suffixIcon: Icon(Icons.arrow_drop_down),
+                        ),
+                        child: Row(
+                          children: [
+                            if (_categoryId != null) ...[
+                              Icon(
+                                categories.firstWhere((c) => c.id == _categoryId).icon,
+                                color: categories.firstWhere((c) => c.id == _categoryId).color,
+                                size: 20,
                               ),
+                              SizedBox(width: 8),
+                            ],
+                            Text(
+                              _categoryId != null
+                                  ? categories.firstWhere((c) => c.id == _categoryId).name
+                                  : "Select Category",
+                              style: TextStyle(fontSize: 16),
                             ),
                           ],
                         ),
                       ),
                     );
-                    if (selected != null) setState(() => _categoryId = selected);
                   },
-                  child: InputDecorator(
-                    decoration: InputDecoration(
-                      labelText: 'Category',
-                      border: OutlineInputBorder(),
-                      suffixIcon: Icon(Icons.arrow_drop_down),
-                    ),
-                    child: Row(
-                      children: [
-                        if (_categoryId != null) ...[
-                          Icon(
-                            categories.firstWhere((c) => c.id == _categoryId).icon,
-                            color: categories.firstWhere((c) => c.id == _categoryId).color,
-                            size: 20,
-                          ),
-                          SizedBox(width: 8),
-                        ],
-                        Text(
-                          _categoryId != null
-                              ? categories.firstWhere((c) => c.id == _categoryId).name
-                              : "Select Category",
-                          style: TextStyle(fontSize: 16),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                SizedBox(height: 16),
-
-                // Date & Time picker - styled like bill screen
-                InkWell(
-                  onTap: _pickDateTime,
-                  child: InputDecorator(
-                    decoration: InputDecoration(
-                      labelText: 'Date & Time',
-                      border: OutlineInputBorder(),
-                      suffixIcon: Icon(Icons.access_time),
-                    ),
-                    child: Text(
-                      DateFormat('MMM d, yyyy hh:mm a').format(
-                        DateTime(
-                          _selectedDate.year,
-                          _selectedDate.month,
-                          _selectedDate.day,
-                          _selectedTime.hour,
-                          _selectedTime.minute,
-                        ),
-                      ),
-                    ),
-                  ),
                 ),
 
                 SizedBox(height: 16),

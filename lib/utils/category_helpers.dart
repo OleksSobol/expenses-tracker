@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 
 
 Category? getCategoryById(int id){
-  return categories.firstWhere(
+  return categoriesNotifier.value.firstWhere(
     (cat) => cat.id == id,
     orElse: () =>  Category(id: 0, name: 'Other', icon: Icons.help, color: Colors.grey),
   );
