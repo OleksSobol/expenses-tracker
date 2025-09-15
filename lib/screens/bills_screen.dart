@@ -8,7 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 
 class BillsScreen extends StatefulWidget {
-  const BillsScreen({Key? key}) : super(key: key);
+  const BillsScreen({super.key});
 
   @override
   _BillsScreenState createState() => _BillsScreenState();
@@ -304,8 +304,8 @@ class _BillsScreenState extends State<BillsScreen> with TickerProviderStateMixin
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _navigateToAddBill(),
-        child: Icon(Icons.add),
         tooltip: 'Add Bill',
+        child: Icon(Icons.add),
       ),
       body: _isLoading
           ? Center(child: CircularProgressIndicator())

@@ -1,5 +1,6 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/home_screen.dart';
 import 'screens/bills_screen.dart';
@@ -10,6 +11,12 @@ void main() async {
   // Ensure Flutter binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
   
+  // lock orientation
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown
+  ]);
+
   // Load categories from storage before starting the app
   await CategoryService.loadCategories();
   

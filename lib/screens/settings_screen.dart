@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'categories_screen.dart';
 import 'help_support_screen.dart';
+import '../services/db_service.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class SettingsScreen extends StatefulWidget {
   final Function(ThemeMode) onThemeChanged;
@@ -18,11 +22,29 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   ThemeMode _currentThemeMode = ThemeMode.system;
+  bool _isExporting = false;
+  bool _isClearing = false;
+  bool _hasStoragePermission = false;
 
   @override
   void initState() {
     super.initState();
     _loadThemePreference();
+    _checkStoragePermission();
+  }
+
+  Future<void> _checkStoragePermission() async {
+    if (Platform.isAndroid) {
+      final status = await Permission.storage.status;
+      setState(() {
+        _hasStoragePermission = status.isGranted;
+      });
+    } else {
+      // iOS doesn't need special permission for app documents
+      setState(() {
+        _hasStoragePermission = true;
+      });
+    }
   }
 
   Future<void> _loadThemePreference() async {
@@ -79,6 +101,264 @@ class _SettingsScreenState extends State<SettingsScreen> {
       default:
         return 'System';
     }
+  }
+
+  Future<Directory?> _getStorageDirectory() async {
+    if (Platform.isAndroid) {
+      if (_hasStoragePermission) {
+        // Try Downloads directory first
+        try {
+          final downloadsDir = Directory('/storage/emulated/0/Download/ExpensesTracker');
+          if (!await downloadsDir.exists()) {
+            await downloadsDir.create(recursive: true);
+          }
+          return downloadsDir;
+        } catch (e) {
+          // Fall back to external storage
+          final externalDir = await getExternalStorageDirectory();
+          if (externalDir != null) {
+            final expensesDir = Directory('${externalDir.path}/ExpensesTracker');
+            if (!await expensesDir.exists()) {
+              await expensesDir.create(recursive: true);
+            }
+            return expensesDir;
+          }
+        }
+      } else {
+        // Use app-specific storage without permission
+        final externalDir = await getExternalStorageDirectory();
+        if (externalDir != null) {
+          final expensesDir = Directory('${externalDir.path}/ExpensesTracker');
+          if (!await expensesDir.exists()) {
+            await expensesDir.create(recursive: true);
+          }
+          return expensesDir;
+        }
+      }
+    } else {
+      // iOS - use documents directory
+      final documentsDir = await getApplicationDocumentsDirectory();
+      final expensesDir = Directory('${documentsDir.path}/ExpensesTracker');
+      if (!await expensesDir.exists()) {
+        await expensesDir.create(recursive: true);
+      }
+      return expensesDir;
+    }
+    
+    return null;
+  }
+
+  Future<void> _exportData() async {
+    setState(() {
+      _isExporting = true;
+    });
+
+    try {
+      final db = DBService();
+      
+      // Get all data
+      final transactions = await db.queryAll('transactions');
+      final bills = await db.queryAll('bills');
+      final categories = await db.queryAll('categories');
+
+      // Create CSV content for transactions
+      String transactionsCsv = 'ID,Amount,Type,Category ID,Date,Note,Bill ID\n';
+      for (final transaction in transactions) {
+        transactionsCsv += '${transaction['id']},${transaction['amount']},${transaction['type']},${transaction['categoryId'] ?? ''},${transaction['date']},${transaction['note']?.replaceAll(',', ';') ?? ''},${transaction['billId'] ?? ''}\n';
+      }
+
+      // Create CSV content for bills
+      String billsCsv = 'ID,Name,Amount,Frequency,Next Due Date,Autopay,Category ID,Notes,Last Paid Date,Is Paid,Link\n';
+      for (final bill in bills) {
+        billsCsv += '${bill['id']},${bill['name']?.replaceAll(',', ';') ?? ''},${bill['amount']},${bill['frequency']},${bill['nextDueDate']},${bill['autopay']},${bill['categoryId'] ?? ''},${bill['notes']?.replaceAll(',', ';') ?? ''},${bill['lastPaidDate'] ?? ''},${bill['isPaid']},${bill['link']?.replaceAll(',', ';') ?? ''}\n';
+      }
+
+      // Create CSV content for categories
+      String categoriesCsv = 'ID,Name,Icon,Color\n';
+      for (final category in categories) {
+        categoriesCsv += '${category['id']},${category['name']?.replaceAll(',', ';') ?? ''},${category['icon'] ?? ''},${category['color'] ?? ''}\n';
+      }
+
+      // Get storage directory
+      final directory = await _getStorageDirectory();
+      
+      if (directory == null) {
+        _showErrorDialog('Could not access storage directory');
+        return;
+      }
+
+      final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-').split('.')[0];
+      
+      // Create files
+      final transactionsFile = File('${directory.path}/transactions_$timestamp.csv');
+      final billsFile = File('${directory.path}/bills_$timestamp.csv');
+      final categoriesFile = File('${directory.path}/categories_$timestamp.csv');
+
+      await transactionsFile.writeAsString(transactionsCsv);
+      await billsFile.writeAsString(billsCsv);
+      await categoriesFile.writeAsString(categoriesCsv);
+
+      final locationMessage = _hasStoragePermission && Platform.isAndroid
+          ? 'Downloads/ExpensesTracker/'
+          : 'App Storage/ExpensesTracker/';
+
+      _showExportSuccessDialog(locationMessage, directory.path, timestamp);
+
+    } catch (e) {
+      _showErrorDialog('Failed to export data: ${e.toString()}');
+    } finally {
+      setState(() {
+        _isExporting = false;
+      });
+    }
+  }
+
+  Future<void> _requestStoragePermission() async {
+    if (Platform.isAndroid) {
+      final status = await Permission.storage.request();
+      setState(() {
+        _hasStoragePermission = status.isGranted;
+      });
+      
+      if (status.isGranted) {
+        _showSuccessDialog('Storage permission granted! Exported files will now be saved to your Downloads folder.');
+      } else {
+        _showErrorDialog('Storage permission denied. Files will be saved to app storage only.');
+      }
+    }
+  }
+
+  Future<void> _clearAllData() async {
+    setState(() {
+      _isClearing = true;
+    });
+
+    try {
+      final db = DBService();
+      
+      // Clear all tables
+      await db.clearTable('transactions');
+      await db.clearTable('bills');
+      await db.clearTable('categories');
+
+      _showSuccessDialog('All data cleared successfully!');
+      
+    } catch (e) {
+      _showErrorDialog('Failed to clear data: ${e.toString()}');
+    } finally {
+      setState(() {
+        _isClearing = false;
+      });
+    }
+  }
+
+  void _showExportSuccessDialog(String location, String fullPath, String timestamp) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.green),
+            SizedBox(width: 8),
+            Text('Export Successful'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Your data has been exported successfully!'),
+            SizedBox(height: 16),
+            Text(
+              'Location:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Text(location, style: TextStyle(fontSize: 12, color: Colors.blue)),
+            SizedBox(height: 4),
+            Text(fullPath, style: TextStyle(fontSize: 10, color: Colors.grey[600])),
+            SizedBox(height: 12),
+            Text(
+              'Files created:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Text('• transactions_$timestamp.csv'),
+            Text('• bills_$timestamp.csv'),
+            Text('• categories_$timestamp.csv'),
+            SizedBox(height: 12),
+            Container(
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: Colors.blue.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info, size: 16, color: Colors.blue),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Access files through your device\'s file manager app.',
+                      style: TextStyle(fontSize: 12, color: Colors.blue[700]),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSuccessDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.green),
+            SizedBox(width: 8),
+            Text('Success'),
+          ],
+        ),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.error, color: Colors.red),
+            SizedBox(width: 8),
+            Text('Error'),
+          ],
+        ),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -143,11 +423,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           // Data Section
           _buildSectionHeader('Data & Backup'),
+          // Storage Permission Card (Android only)
+          if (Platform.isAndroid) ...[
+            _buildSettingsCard(
+              icon: _hasStoragePermission ? Icons.check_circle : Icons.folder,
+              title: 'Storage Access',
+              subtitle: _hasStoragePermission 
+                  ? 'Storage permission granted - files save to Downloads' 
+                  : 'Grant permission to save exports to Downloads folder',
+              onTap: _hasStoragePermission ? null : () => _requestStoragePermission(),
+              trailing: _hasStoragePermission 
+                  ? Icon(Icons.check, color: Colors.green)
+                  : null,
+              textColor: _hasStoragePermission ? Colors.green : null,
+            ),
+            SizedBox(height: 8),
+          ],
           _buildSettingsCard(
             icon: Icons.cloud_upload,
             title: 'Export Data',
-            subtitle: 'Export your transactions to CSV',
-            onTap: () => _showComingSoonDialog(context, 'Export Data'),
+            subtitle: _isExporting 
+                ? 'Exporting data...' 
+                : 'Export your transactions, bills, and categories to CSV',
+            onTap: _isExporting ? null : () => _showExportDialog(),
+            trailing: _isExporting 
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : null,
           ),
           SizedBox(height: 8),
           _buildSettingsCard(
@@ -160,9 +465,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _buildSettingsCard(
             icon: Icons.delete_sweep,
             title: 'Clear All Data',
-            subtitle: 'Delete all transactions and categories',
-            onTap: () => _showClearDataDialog(context),
+            subtitle: _isClearing 
+                ? 'Clearing data...' 
+                : 'Delete all transactions, bills, and categories',
+            onTap: _isClearing ? null : () => _showClearDataDialog(context),
             textColor: Colors.red,
+            trailing: _isClearing 
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+                    ),
+                  )
+                : null,
           ),
 
           SizedBox(height: 24),
@@ -215,7 +532,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required IconData icon,
     required String title,
     required String subtitle,
-    required VoidCallback onTap,
+    VoidCallback? onTap,
     Color? textColor,
     Widget? trailing,
   }) {
@@ -227,7 +544,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: (textColor ?? Theme.of(context).colorScheme.primary).withOpacity(0.1),
+            color: (textColor ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Icon(
@@ -250,11 +567,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             fontSize: 13,
           ),
         ),
-        trailing: trailing ?? Icon(
+        trailing: trailing ?? (onTap != null ? Icon(
           Icons.arrow_forward_ios,
           size: 16,
-          color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.6),
-        ),
+          color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: .6),
+        ) : null),
         onTap: onTap,
       ),
     );
@@ -321,7 +638,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           border: Border.all(
             color: isSelected 
                 ? Theme.of(context).colorScheme.primary 
-                : Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                : Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
           ),
         ),
         child: Row(
@@ -368,6 +685,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  void _showExportDialog() {
+    final String locationText = _hasStoragePermission && Platform.isAndroid
+        ? 'Downloads/ExpensesTracker/ folder'
+        : 'app storage folder';
+        
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Export Data'),
+        content: Text(
+          'This will export all your transactions, bills, and categories to CSV files. Files will be saved to your $locationText.\n\nContinue with export?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _exportData();
+            },
+            child: Text('Export'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showComingSoonDialog(BuildContext context, String feature) {
     showDialog(
       context: context,
@@ -389,25 +735,50 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Clear All Data'),
-        content: Text(
-          'This will permanently delete all your transactions and categories. This action cannot be undone.\n\nAre you sure you want to continue?',
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              color: Colors.red,
+              size: 48,
+            ),
+            SizedBox(height: 16),
+            Text(
+              'This will permanently delete ALL your data including:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            Text('• All transactions'),
+            Text('• All bills and recurring payments'),
+            Text('• All custom categories'),
+            SizedBox(height: 16),
+            Text(
+              'This action cannot be undone!',
+              style: TextStyle(
+                color: Colors.red,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text('Are you absolutely sure you want to continue?'),
+          ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text('Cancel'),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Feature coming soon - data clearing will be implemented'),
-                  backgroundColor: Colors.orange,
-                ),
-              );
+              _clearAllData();
             },
-            child: Text('Clear Data', style: TextStyle(color: Colors.red)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: Text('Clear All Data'),
           ),
         ],
       ),

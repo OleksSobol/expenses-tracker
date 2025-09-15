@@ -26,8 +26,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addCategory,
-        child: Icon(Icons.add),
         tooltip: 'Add Category',
+        child: Icon(Icons.add),
       ),
       body: ValueListenableBuilder<List<Category>>(
         valueListenable: categoriesNotifier,

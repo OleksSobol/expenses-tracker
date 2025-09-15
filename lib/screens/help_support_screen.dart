@@ -211,7 +211,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
 
                         // Subject dropdown
                         DropdownButtonFormField<String>(
-                          value: _selectedSubject,
+                          initialValue: _selectedSubject,
                           decoration: InputDecoration(
                             labelText: 'Subject',
                             border: OutlineInputBorder(),

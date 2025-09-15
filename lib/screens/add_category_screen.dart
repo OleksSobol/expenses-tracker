@@ -68,9 +68,9 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
       ),
     );
 
-    if (pickedIcon != null && pickedIcon.data != null) {
+    if (pickedIcon != null) {
       setState(() {
-        _selectedIcon = pickedIcon.data!;
+        _selectedIcon = pickedIcon.data;
       });
     }
   }

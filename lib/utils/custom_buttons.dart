@@ -16,7 +16,7 @@ Widget buildTransactionTypeButton({
         duration: Duration(milliseconds: 200),
         padding: EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? color : theme.colorScheme.surfaceVariant,
+          color: isSelected ? color : theme.colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? color : theme.colorScheme.outline,
