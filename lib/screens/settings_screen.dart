@@ -139,7 +139,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final status = await _permissionService.requestStoragePermission();
     final granted = status.isGranted;
     setState(() {
-      _hasStoragePermission = granted as bool;
+      _hasStoragePermission = granted;
     });
     
     if (granted) {
