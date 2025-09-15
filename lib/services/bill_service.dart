@@ -1,11 +1,15 @@
-// lib/services/bill_service.dart
-import '../models/bill.dart';
 import '../models/transaction.dart';
+import 'notification_service.dart';
+import '../models/bill.dart';
 import 'db_service.dart';
+
 
 class BillService {
   static const String tableName = 'bills';
   final DBService _dbService = DBService();
+  final NotificationService _notificationService = NotificationService();
+
+
 
   // Get all bills ordered by due date
   Future<List<Map<String, dynamic>>> getAllBills() async {
@@ -15,17 +19,22 @@ class BillService {
 
   // Add a new bill
   Future<int> addBill(Bill bill) async {
-    return await _dbService.insert(tableName, bill.toMap());
+    final result = await _dbService.insert(tableName, bill.toMap());
+    await _rescheduleNotifications();
+    return result;
   }
 
   // Update existing bill
   Future<void> updateBill(int id, Bill bill) async {
     await _dbService.update(tableName, id, bill.toMap());
+    await _rescheduleNotifications();
   }
 
   // Delete bill
   Future<int> deleteBill(int id) async {
-    return await _dbService.delete(tableName, id);
+    final result = await _dbService.delete(tableName, id);
+    await _rescheduleNotifications();
+    return result;
   }
 
   // Get bill by ID
@@ -47,17 +56,13 @@ class BillService {
   Future<void> markBillAsPaid(Bill bill) async {
     if (bill.id == null) return;
 
-    // Create updated bill with next due date
     final updatedBill = bill.markAsPaid();
-    
-    // Update bill in database
     await updateBill(bill.id!, updatedBill);
 
-    // Create transaction record for the payment
     final transaction = TransactionModel(
       amount: bill.amount,
       type: 'expense',
-      categoryId: bill.categoryId ?? 5, // Default to Bills category
+      categoryId: bill.categoryId ?? 5,
       date: DateTime.now(),
       note: 'Bill payment: ${bill.name}',
       billId: bill.id,
@@ -65,6 +70,7 @@ class BillService {
 
     // Insert transaction
     await _dbService.insert('transactions', transaction.toMap());
+    await _rescheduleNotifications();
   }
 
   // Get overdue bills
@@ -93,5 +99,10 @@ class BillService {
              dueDate.isBefore(threeDaysFromNow) && 
              !bill.isPaid;
     }).toList();
+  }
+
+  Future<void> _rescheduleNotifications() async {
+    final bills = await getAllBills();
+    await _notificationService.rescheduleAllBillNotifications(bills);
   }
 }

@@ -1,15 +1,21 @@
 // lib/main.dart
+import 'package:shared_preferences/shared_preferences.dart';
+import 'services/notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'screens/home_screen.dart';
-import 'screens/bills_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/bills_screen.dart';
+import 'screens/home_screen.dart';
 import 'models/category.dart';
+
 
 void main() async {
   // Ensure Flutter binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
+
+   // Initialize notifications
+  final notificationService = NotificationService();
+  await notificationService.initialize();
   
   // lock orientation
   await SystemChrome.setPreferredOrientations([

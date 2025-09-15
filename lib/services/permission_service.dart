@@ -68,6 +68,11 @@ class PermissionService {
     }
   }
 
+  /// Legacy method for backward compatibility
+  Future<bool> checkStoragePermission() async {
+    return await hasStoragePermission();
+  }
+
   /// Show permission rationale to user
   static String getPermissionRationale() {
     return 'This app would like to access your device storage to save exported data files (like transaction CSV files) to your Downloads folder, making them easier to find and share.\n\nIf you deny this permission, files will still be saved to the app\'s private storage folder, which you can access through a file manager.';
