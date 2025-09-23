@@ -42,4 +42,25 @@ class TransactionService {
 
     return filtered;
   }
+
+  Map<String, double> calculateTotals(List<Map<String, dynamic>> transactions) {
+  double income = 0;
+  double expense = 0;
+
+  for (var tx in transactions) {
+    final amount = (tx['amount'] as num).toDouble();
+    if (tx['type'] == 'income') {
+      income += amount;
+    } else if (tx['type'] == 'expense') {
+      expense += amount;
+    }
+  }
+
+  return {
+    "income": income,
+    "expense": expense,
+    "balance": income - expense,
+  };
+}
+
 }

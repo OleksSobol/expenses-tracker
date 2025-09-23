@@ -91,20 +91,20 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           // Summary
           TransactionSummary(
-            income: _allTransactions
+            income: filteredTransactions
               .where((tx) => tx['type'] == 'income')
               .fold(0.0, (sum, tx) => sum + (tx['amount'] as num).toDouble()),
-            expense: _allTransactions
+            expense: filteredTransactions
               .where((tx) => tx['type'] == 'expense')
-              .fold(0.0,(sum, tx) => sum + (tx['amount'] as num).toDouble()),
-            balance: _allTransactions.fold(
+              .fold(0.0, (sum, tx) => sum + (tx['amount'] as num).toDouble()),
+            balance: filteredTransactions.fold(
               0.0,
               (sum, tx) => tx['type'] == 'income'
                   ? sum + (tx['amount'] as num).toDouble()
                   : sum - (tx['amount'] as num).toDouble(),
-              ),
+            ),
           ),
-          
+
           // Compact Filter bar
           Container(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
