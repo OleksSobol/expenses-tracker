@@ -6,6 +6,7 @@ import '../widgets/transaction_list_item.dart';
 import '../widgets/transaction_summary.dart';
 import '../services/transaction_service.dart';
 import 'add_transaction_screen.dart';
+import '../widgets/transaction_filter_bar.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -106,140 +107,119 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
 
           // Compact Filter bar
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              border: Border(
-                bottom: BorderSide(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12), 
-                  width: 1),
-              ),
-            ),
-            child: Column(
-              children: [
-                // First row: Type and Sort
-                Row(
-                  children: [
-                    // Type filter - compact chips
-                    Expanded(
-                      child: Row(
-                        children: [
-                          _buildCompactFilterChip('All', _filter.type == 'all', () {
-                            _onFilterChanged(_filter.copyWith(type: 'all'));
-                          }),
-                          SizedBox(width: 6),
-                          _buildCompactFilterChip('Income', _filter.type == 'income', () {
-                            _onFilterChanged(_filter.copyWith(type: 'income'));
-                          }),
-                          SizedBox(width: 6),
-                          _buildCompactFilterChip('Expense', _filter.type == 'expense', () {
-                            _onFilterChanged(_filter.copyWith(type: 'expense'));
-                          }),
-                        ],
-                      ),
-                    ),
+          // Container(
+          //   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          //   decoration: BoxDecoration(
+          //     color: Theme.of(context).colorScheme.surface,
+          //     border: Border(
+          //       bottom: BorderSide(
+          //         color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12), 
+          //         width: 1),
+          //     ),
+          //   ),
+          //   child: Column(
+          //     children: [
+          //       // First row: Type and Sort
+          //       Row(
+          //         children: [
+          //           // Type filter - compact chips
+          //           Expanded(
+          //             child: Row(
+          //               children: [
+          //                 _buildCompactFilterChip('All', _filter.type == 'all', () {
+          //                   _onFilterChanged(_filter.copyWith(type: 'all'));
+          //                 }),
+          //                 SizedBox(width: 6),
+          //                 _buildCompactFilterChip('Income', _filter.type == 'income', () {
+          //                   _onFilterChanged(_filter.copyWith(type: 'income'));
+          //                 }),
+          //                 SizedBox(width: 6),
+          //                 _buildCompactFilterChip('Expense', _filter.type == 'expense', () {
+          //                   _onFilterChanged(_filter.copyWith(type: 'expense'));
+          //                 }),
+          //               ],
+          //             ),
+          //           ),
                     
-                    SizedBox(width: 12),
+          //           SizedBox(width: 12),
                     
-                    // Sort dropdown - compact
-                    Container(
-                      height: 32,
-                      padding: EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: .12)),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _filter.sortBy,
-                          isDense: true,
-                          style: TextStyle(
-                            fontSize: 13, 
-                            color: Theme.of(context).colorScheme.onSurface),
-                          items: [
-                            DropdownMenuItem(value: 'date_desc', child: Text('Date ↓')),
-                            DropdownMenuItem(value: 'date_asc', child: Text('Date ↑')),
-                            DropdownMenuItem(value: 'amount_desc', child: Text('Amount ↓')),
-                            DropdownMenuItem(value: 'amount_asc', child: Text('Amount ↑')),
-                          ],
-                          onChanged: (value) {
-                            if (value != null) {
-                              _onFilterChanged(_filter.copyWith(sortBy: value));
-                            }
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+          //           // Sort dropdown - compact
+          //           Container(
+          //             height: 32,
+          //             padding: EdgeInsets.symmetric(horizontal: 12),
+          //             decoration: BoxDecoration(
+          //               color: Theme.of(context).colorScheme.surface,
+          //               borderRadius: BorderRadius.circular(16),
+          //               border: Border.all(
+          //                 color: Theme.of(context).colorScheme.onSurface.withValues(alpha: .12)),
+          //             ),
+          //             child: DropdownButtonHideUnderline(
+          //               child: DropdownButton<String>(
+          //                 value: _filter.sortBy,
+          //                 isDense: true,
+          //                 style: TextStyle(
+          //                   fontSize: 13, 
+          //                   color: Theme.of(context).colorScheme.onSurface),
+          //                 items: [
+          //                   DropdownMenuItem(value: 'date_desc', child: Text('Date ↓')),
+          //                   DropdownMenuItem(value: 'date_asc', child: Text('Date ↑')),
+          //                   DropdownMenuItem(value: 'amount_desc', child: Text('Amount ↓')),
+          //                   DropdownMenuItem(value: 'amount_asc', child: Text('Amount ↑')),
+          //                 ],
+          //                 onChanged: (value) {
+          //                   if (value != null) {
+          //                     _onFilterChanged(_filter.copyWith(sortBy: value));
+          //                   }
+          //                 },
+          //               ),
+          //             ),
+          //           ),
+          //         ],
+          //       ),
                 
-                // Second row: Category filter (only if there are categories)
-                // Second row: Category filter
-                ValueListenableBuilder<List<Category>>(
-                  valueListenable: categoriesNotifier,
-                  builder: (context, categoryList, _) {
-                    if (categoryList.isEmpty) return SizedBox();
+          //       // Second row: Category filter (only if there are categories)
+          //       // Second row: Category filter
+          //       ValueListenableBuilder<List<Category>>(
+          //         valueListenable: categoriesNotifier,
+          //         builder: (context, categoryList, _) {
+          //           if (categoryList.isEmpty) return SizedBox();
 
-                    return Column(
-                      children: [
-                        SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                child: Row(
-                                  children: [
-                                    _buildCompactFilterChip(
-                                      'All Categories',
-                                      _filter.categoryId == null,
-                                      () => _onFilterChanged(_filter.clearCategory()),
-                                    ),
-                                    SizedBox(width: 6),
-                                    ...categoryList.map((cat) => Padding(
-                                          padding: const EdgeInsets.only(right: 6.0),
-                                          child: _buildCompactCategoryChip(cat),
-                                        )),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    );
-                  },
-                ),
-
-                // if (categories.isNotEmpty) ...[
-                //   SizedBox(height: 8),
-                //   Row(
-                //     children: [
-                //       Expanded(
-                //         child: SingleChildScrollView(
-                //           scrollDirection: Axis.horizontal,
-                //           child: Row(
-                //             children: [
-                //               _buildCompactFilterChip('All Categories', _filter.categoryId == null, () {
-                //                 _onFilterChanged(_filter.clearCategory());
-                //               }),
-                //               SizedBox(width: 6),
-                //               ...categories.map((cat) => Padding(
-                //                 padding: const EdgeInsets.only(right: 6.0),
-                //                 child: _buildCompactCategoryChip(cat),
-                //               )),
-                //             ],
-                //           ),
-                //         ),
-                //       ),
-                //     ],
-                //   ),
-                // ],
-              ],
-            ),
+          //           return Column(
+          //             children: [
+          //               SizedBox(height: 8),
+          //               Row(
+          //                 children: [
+          //                   Expanded(
+          //                     child: SingleChildScrollView(
+          //                       scrollDirection: Axis.horizontal,
+          //                       child: Row(
+          //                         children: [
+          //                           _buildCompactFilterChip(
+          //                             'All Categories',
+          //                             _filter.categoryId == null,
+          //                             () => _onFilterChanged(_filter.clearCategory()),
+          //                           ),
+          //                           SizedBox(width: 6),
+          //                           ...categoryList.map((cat) => Padding(
+          //                                 padding: const EdgeInsets.only(right: 6.0),
+          //                                 child: _buildCompactCategoryChip(cat),
+          //                               )),
+          //                         ],
+          //                       ),
+          //                     ),
+          //                   ),
+          //                 ],
+          //               ),
+          //             ],
+          //           );
+          //         },
+          //       ),
+          //     ],
+          //   ),
+          // ),
+          TransactionFilterBar(
+            filter: _filter,
+            onFilterChanged: _onFilterChanged,
           ),
 
           // Transaction list

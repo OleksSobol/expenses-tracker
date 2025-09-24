@@ -21,6 +21,11 @@ class TransactionService {
     final filtered = transactions.where((tx) {
       if (filter.type != 'all' && tx['type'] != filter.type) return false;
       if (filter.categoryId != null && tx['categoryId'] != filter.categoryId) return false;
+
+      final txDate = DateTime.parse(tx['date']);
+      if (filter.startDate != null && txDate.isBefore(filter.startDate!)) return false;
+      if (filter.endDate != null && txDate.isAfter(filter.endDate!)) return false;
+
       return true;
     }).toList();
     
