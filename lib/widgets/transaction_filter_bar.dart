@@ -182,6 +182,111 @@ class _TransactionFilterBarState extends State<TransactionFilterBar>
                   const Divider(height: 1),
                   const SizedBox(height: 16),
                   
+                   // Sort Filter Section
+                  _buildFilterSection(
+                    'Sort By',
+                    Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            value: widget.filter.sortBy,
+                            decoration: const InputDecoration(
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              border: OutlineInputBorder(),
+                            ),
+                            items: const [
+                              DropdownMenuItem(value: 'date_desc', child: Text('Date (Newest First)')),
+                              DropdownMenuItem(value: 'date_asc', child: Text('Date (Oldest First)')),
+                              DropdownMenuItem(value: 'amount_desc', child: Text('Amount (High to Low)')),
+                              DropdownMenuItem(value: 'amount_asc', child: Text('Amount (Low to High)')),
+                            ],
+                            onChanged: (value) {
+                              if (value != null) {
+                                widget.onFilterChanged(widget.filter.copyWith(sortBy: value));
+                              }
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  // Date Filter Section
+                  _buildFilterSection(
+                    'Date Range',
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              _buildDatePresetChip('Today', 'today'),
+                              const SizedBox(width: 8),
+                              _buildDatePresetChip('This Week', 'this_week'),
+                              const SizedBox(width: 8),
+                              _buildDatePresetChip('This Month', 'this_month'),
+                              const SizedBox(width: 8),
+                              _buildDatePresetChip('Last 30 Days', 'last_30'),
+                            ],
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 12),
+
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: _showCustomDatePicker,
+                                icon: const Icon(Icons.date_range, size: 18),
+                                label: const Text('Custom Range'),
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                ),
+                              ),
+                            ),
+                            if (widget.filter.startDate != null || widget.filter.endDate != null) ...[
+                              const SizedBox(width: 8),
+                              OutlinedButton.icon(
+                                onPressed: () => widget.onFilterChanged(
+                                  widget.filter.copyWith(startDate: null, endDate: null)
+                                ),
+                                icon: const Icon(Icons.clear, size: 18),
+                                label: const Text('Clear'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Theme.of(context).colorScheme.error,
+                                  side: BorderSide(color: Theme.of(context).colorScheme.error),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        if (widget.filter.startDate != null && widget.filter.endDate != null) ...[
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primaryContainer,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'Selected: ${DateFormat('MMM dd, yyyy').format(widget.filter.startDate!)} - ${DateFormat('MMM dd, yyyy').format(widget.filter.endDate!)}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Theme.of(context).colorScheme.onPrimaryContainer,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 12),
+
                   // Type Filter Section
                   _buildFilterSection(
                     'Transaction Type',
@@ -234,108 +339,7 @@ class _TransactionFilterBarState extends State<TransactionFilterBar>
                   ),
                   
                   const SizedBox(height: 16),
-                  
-                  // Date Filter Section
-                  _buildFilterSection(
-                    'Date Range',
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: [
-                              _buildDatePresetChip('Today', 'today'),
-                              const SizedBox(width: 8),
-                              _buildDatePresetChip('This Week', 'this_week'),
-                              const SizedBox(width: 8),
-                              _buildDatePresetChip('This Month', 'this_month'),
-                              const SizedBox(width: 8),
-                              _buildDatePresetChip('Last 30 Days', 'last_30'),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: _showCustomDatePicker,
-                                icon: const Icon(Icons.date_range, size: 18),
-                                label: const Text('Custom Range'),
-                                style: OutlinedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                ),
-                              ),
-                            ),
-                            if (widget.filter.startDate != null || widget.filter.endDate != null) ...[
-                              const SizedBox(width: 8),
-                              OutlinedButton.icon(
-                                onPressed: () => widget.onFilterChanged(
-                                  widget.filter.copyWith(startDate: null, endDate: null)
-                                ),
-                                icon: const Icon(Icons.clear, size: 18),
-                                label: const Text('Clear'),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: Theme.of(context).colorScheme.error,
-                                  side: BorderSide(color: Theme.of(context).colorScheme.error),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                        if (widget.filter.startDate != null && widget.filter.endDate != null) ...[
-                          const SizedBox(height: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.primaryContainer,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              'Selected: ${DateFormat('MMM dd, yyyy').format(widget.filter.startDate!)} - ${DateFormat('MMM dd, yyyy').format(widget.filter.endDate!)}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Theme.of(context).colorScheme.onPrimaryContainer,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 16),
-                  
-                  // Sort Filter Section
-                  _buildFilterSection(
-                    'Sort By',
-                    Row(
-                      children: [
-                        Expanded(
-                          child: DropdownButtonFormField<String>(
-                            value: widget.filter.sortBy,
-                            decoration: const InputDecoration(
-                              isDense: true,
-                              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              border: OutlineInputBorder(),
-                            ),
-                            items: const [
-                              DropdownMenuItem(value: 'date_desc', child: Text('Date (Newest First)')),
-                              DropdownMenuItem(value: 'date_asc', child: Text('Date (Oldest First)')),
-                              DropdownMenuItem(value: 'amount_desc', child: Text('Amount (High to Low)')),
-                              DropdownMenuItem(value: 'amount_asc', child: Text('Amount (Low to High)')),
-                            ],
-                            onChanged: (value) {
-                              if (value != null) {
-                                widget.onFilterChanged(widget.filter.copyWith(sortBy: value));
-                              }
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+
                 ],
               ),
             ),

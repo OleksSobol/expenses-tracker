@@ -74,7 +74,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
 
   final emailUri = Uri(
     scheme: 'mailto',
-    path: 'support@expensestracker.com',
+    path: 'expenses-app@osobol.com',
     queryParameters: {
       'subject': 'Expenses Tracker - $_selectedSubject',
       'body': '${_messageController.text}\n$deviceInfo\n\n--- Contact Info ---\nEmail: (please add your email)',
@@ -96,7 +96,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'No email app found. Please email support@expensestracker.com directly or check your email app settings.',
+              'No email app found. Please email expenses-app@osobol.com directly or check your email app settings.',
             ),
             backgroundColor: Colors.red,
             duration: Duration(seconds: 4),
@@ -109,7 +109,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Failed to open email app: $e. Please email support@expensestracker.com manually.',
+            'Failed to open email app: $e. Please email expenses-app@osobol.com manually.',
           ),
           backgroundColor: Colors.red,
           duration: Duration(seconds: 4),

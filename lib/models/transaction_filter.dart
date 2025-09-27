@@ -18,15 +18,15 @@ class TransactionFilter {
     String? type,
     int? categoryId,
     String? sortBy,
-    DateTime? startDate,
-    DateTime? endDate,
+    Object? startDate =  _sentinel,
+    Object? endDate =  _sentinel,
   }) {
     return TransactionFilter(
       type: type ?? this.type,
       categoryId: categoryId,
       sortBy: sortBy ?? this.sortBy,
-      startDate: startDate ?? this.startDate,
-      endDate: endDate ?? this.endDate,
+      startDate: startDate == _sentinel ? this.startDate : startDate as DateTime?,
+      endDate: endDate == _sentinel ? this.endDate : endDate as DateTime?,
     );
   }
 
@@ -38,3 +38,6 @@ class TransactionFilter {
     return copyWith(startDate: null, endDate: null);
   }
 }
+
+// Private sentinel so we can differentiate "not provided" vs "explicit null"
+const _sentinel = Object();
