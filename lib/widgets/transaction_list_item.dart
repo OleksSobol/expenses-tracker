@@ -1,5 +1,6 @@
 // widgets/transaction_list_item.dart
 import 'package:flutter/material.dart';
+import '../theme/app_tokens.dart';
 import '../utils/category_helpers.dart';
 
 class TransactionListItem extends StatelessWidget {
@@ -17,7 +18,8 @@ class TransactionListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final category = getCategoryById(transaction['categoryId']);
-    
+    final isExpense = transaction['type'] == 'expense';
+
     return Dismissible(
       key: Key(transaction['id'].toString()),
       direction: DismissDirection.endToStart,
@@ -28,45 +30,69 @@ class TransactionListItem extends StatelessWidget {
           const SnackBar(content: Text('Transaction deleted')),
         );
       },
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: category!.color.withValues(alpha: 0.2),
-          child: Icon(category.icon, color: category.color),
+      child: Card(
+        margin: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.xs,
         ),
-        title: Text(
-          '${transaction['note']}',
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        ),
-        subtitle: RichText(
-          text: TextSpan(
-            text: "${transaction['type'].toUpperCase()} | ",
-            style: TextStyle(color: Colors.grey[700]),
-            children: [
-              TextSpan(
-                text: formatDate(transaction['date']),
-                style: TextStyle(color: Colors.grey[500], fontSize: 12),
-              )
-            ],
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.xs,
           ),
-        ),
-        trailing: Text(
-          formatAmount(transaction['amount']),
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: transaction['type'] == 'expense' ? Colors.red : Colors.green,
+          leading: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: category!.color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(AppRadius.small),
+            ),
+            child: Icon(category.icon, color: category.color, size: 22),
           ),
+          title: Text(
+            '${transaction['note']}',
+            style: AppTypography.body.copyWith(fontWeight: FontWeight.w600),
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.xs),
+            child: RichText(
+              text: TextSpan(
+                text: "${transaction['type'].toUpperCase()} | ",
+                style: AppTypography.caption,
+                children: [
+                  TextSpan(
+                    text: formatDate(transaction['date']),
+                    style: AppTypography.caption,
+                  )
+                ],
+              ),
+            ),
+          ),
+          trailing: Text(
+            formatAmount(transaction['amount']),
+            style: AppTypography.body.copyWith(
+              fontWeight: FontWeight.bold,
+              color: isExpense ? AppColors.error : AppColors.success,
+            ),
+          ),
+          onTap: onTap,
         ),
-        onTap: onTap,
       ),
     );
   }
 
   Widget _buildDeleteBackground() {
     return Container(
-      color: Colors.red,
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.error,
+        borderRadius: BorderRadius.circular(AppRadius.medium),
+      ),
       alignment: Alignment.centerRight,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       child: const Icon(Icons.delete, color: Colors.white),
     );
   }

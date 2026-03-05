@@ -8,6 +8,7 @@ import 'screens/bills_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/reports_screen.dart';
 import 'models/category.dart';
+import 'theme/app_tokens.dart';
 
 
 void main() async {
@@ -77,23 +78,38 @@ class _MyAppState extends State<ExpensesTrackerApp> {
       
       // Light theme
       theme: ThemeData(
-        colorSchemeSeed: Colors.blue, // Your brand color
+        colorSchemeSeed: AppColors.primary,
         useMaterial3: true,
         brightness: Brightness.light,
+        scaffoldBackgroundColor: AppColors.background,
+        cardTheme: CardThemeData(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.medium),
+          ),
+          elevation: 1,
+        ),
         appBarTheme: AppBarTheme(
           centerTitle: true,
-          elevation: 2,
+          elevation: 0,
+          scrolledUnderElevation: 1,
         ),
       ),
-      
+
       // Dark theme
       darkTheme: ThemeData(
-        colorSchemeSeed: Colors.blue, // Same brand color
+        colorSchemeSeed: AppColors.primary,
         useMaterial3: true,
         brightness: Brightness.dark,
+        cardTheme: CardThemeData(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.medium),
+          ),
+          elevation: 1,
+        ),
         appBarTheme: AppBarTheme(
           centerTitle: true,
-          elevation: 2,
+          elevation: 0,
+          scrolledUnderElevation: 1,
         ),
       ),
       
@@ -134,29 +150,32 @@ class _MainNavigationState extends State<MainNavigation> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: _screens[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _currentIndex,
+        onDestinationSelected: (index) {
           setState(() {
             _currentIndex = index;
           });
         },
-        type: BottomNavigationBarType.fixed,
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
             label: 'Home',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.receipt_long),
+          NavigationDestination(
+            icon: Icon(Icons.receipt_long_outlined),
+            selectedIcon: Icon(Icons.receipt_long),
             label: 'Bills',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart),
+          NavigationDestination(
+            icon: Icon(Icons.bar_chart_outlined),
+            selectedIcon: Icon(Icons.bar_chart),
             label: 'Reports',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
             label: 'Settings',
           ),
         ],

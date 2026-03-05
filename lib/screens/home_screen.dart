@@ -5,6 +5,7 @@ import '../models/category.dart';
 import '../widgets/transaction_list_item.dart';
 import '../widgets/transaction_summary.dart';
 import '../services/transaction_service.dart';
+import '../theme/app_tokens.dart';
 import 'add_transaction_screen.dart';
 import '../widgets/transaction_filter_bar.dart';
 
@@ -164,16 +165,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.receipt, size: 64, color: Colors.grey),
-                        SizedBox(height: 16),
+                        Icon(Icons.receipt_long_outlined, size: 64, color: Colors.grey),
+                        const SizedBox(height: AppSpacing.md),
                         Text(
                           'No transactions yet',
-                          style: TextStyle(fontSize: 18, color: Colors.grey),
+                          style: AppTypography.sectionTitle.copyWith(color: Colors.grey),
                         ),
-                        SizedBox(height: 8),
+                        const SizedBox(height: AppSpacing.sm),
                         Text(
                           'Tap + to add your first transaction',
-                          style: TextStyle(color: Colors.grey),
+                          style: AppTypography.caption,
                         ),
                       ],
                     ),

@@ -2,6 +2,7 @@
 import 'package:expenses_tracker/models/category.dart';
 import 'package:flutter/material.dart';
 import '../models/transaction_filter.dart';
+import '../theme/app_tokens.dart';
 import 'package:intl/intl.dart';
 
 class TransactionFilterBar extends StatefulWidget {
@@ -28,7 +29,7 @@ class _TransactionFilterBarState extends State<TransactionFilterBar>
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+      duration: AppDurations.slow,
       vsync: this,
     );
     _expandAnimation = CurvedAnimation(
@@ -159,7 +160,7 @@ class _TransactionFilterBarState extends State<TransactionFilterBar>
                     // Expand/collapse icon
                     AnimatedRotation(
                       turns: _isExpanded ? 0.5 : 0.0,
-                      duration: const Duration(milliseconds: 300),
+                      duration: AppDurations.slow,
                       child: Icon(
                         Icons.expand_more,
                         color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
@@ -270,7 +271,7 @@ class _TransactionFilterBarState extends State<TransactionFilterBar>
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             decoration: BoxDecoration(
                               color: Theme.of(context).colorScheme.primaryContainer,
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(AppRadius.small),
                             ),
                             child: Text(
                               'Selected: ${DateFormat('MMM dd, yyyy').format(widget.filter.startDate!)} - ${DateFormat('MMM dd, yyyy').format(widget.filter.endDate!)}',
