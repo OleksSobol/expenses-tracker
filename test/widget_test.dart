@@ -1,4 +1,4 @@
-// This is a basic Flutter widget test.
+// This is a basic Flutter widget test for the Expenses Tracker app.
 //
 // To perform an interaction with a widget in your test, use the WidgetTester
 // utility in the flutter_test package. For example, you can send tap and scroll
@@ -7,24 +7,49 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'package:expenses_tracker/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
+  // Setup database for testing
+  setUpAll(() {
+    // Initialize FFI
+    sqfliteFfiInit();
+    // Change the default factory to use FFI
+    databaseFactory = databaseFactoryFfi;
+  });
+
+  testWidgets('Expenses Tracker app loads correctly', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(ExpensesTrackerApp());
+    await tester.pumpWidget(const ExpensesTrackerApp());
+    
+    // Wait for the app to fully load
+    await tester.pumpAndSettle();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Verify that the bottom navigation bar is present
+    expect(find.byType(BottomNavigationBar), findsOneWidget);
+    
+    // Verify navigation items are present
+    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('Bills'), findsOneWidget);
+    expect(find.text('Settings'), findsOneWidget);
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+  testWidgets('Bottom navigation contains expected tabs', (WidgetTester tester) async {
+    await tester.pumpWidget(const ExpensesTrackerApp());
+    
+    // Wait a reasonable time for the app to load
+    await tester.pump(const Duration(seconds: 1));
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Check that navigation items exist
+    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('Bills'), findsOneWidget);
+    expect(find.text('Settings'), findsOneWidget);
+    
+    // Check that bottom navigation icons exist
+    expect(find.byIcon(Icons.home), findsOneWidget);
+    expect(find.byIcon(Icons.receipt_long), findsOneWidget);
+    expect(find.byIcon(Icons.settings), findsOneWidget);
   });
 }

@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../models/bill.dart';
 import '../services/bill_service.dart';
+import '../theme/app_tokens.dart';
 import 'add_bill_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -89,16 +90,16 @@ class _BillsScreenState extends State<BillsScreen> with TickerProviderStateMixin
 
 
   Color _getDueColor(Bill bill) {
-    if (bill.isPaid) return Colors.green;
-    
+    if (bill.isPaid) return AppColors.success;
+
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final dueDate = DateTime(bill.nextDueDate.year, bill.nextDueDate.month, bill.nextDueDate.day);
     final daysDiff = dueDate.difference(today).inDays;
 
-    if (daysDiff < 0) return Colors.red; // overdue
-    if (daysDiff <= 3) return Colors.orange; // due soon
-    return Colors.grey[600]!; // normal
+    if (daysDiff < 0) return AppColors.error;   // overdue
+    if (daysDiff <= 3) return AppColors.warning; // due soon
+    return Colors.grey[600]!;                    // normal
   }
 
   String _getDueText(Bill bill) {
@@ -174,7 +175,7 @@ class _BillsScreenState extends State<BillsScreen> with TickerProviderStateMixin
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
+              backgroundColor: AppColors.success,
               foregroundColor: Colors.white,
             ),
             child: Text('Mark as Paid'),
@@ -198,7 +199,7 @@ class _BillsScreenState extends State<BillsScreen> with TickerProviderStateMixin
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('${bill.name} marked as paid!'),
-          backgroundColor: Colors.green,
+          backgroundColor: AppColors.success,
           action: SnackBarAction(
             label: 'View',
             textColor: Colors.white,
@@ -212,7 +213,7 @@ class _BillsScreenState extends State<BillsScreen> with TickerProviderStateMixin
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error marking bill as paid: $e'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.error,
         ),
       );
     } finally {
@@ -240,10 +241,10 @@ class _BillsScreenState extends State<BillsScreen> with TickerProviderStateMixin
   Widget _buildPayBackground() {
     return Container(
       alignment: Alignment.centerLeft,
-      padding: EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.green[400]!, Colors.green[600]!],
+          colors: [AppColors.success.withValues(alpha: 0.7), AppColors.success],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
         ),
@@ -268,8 +269,8 @@ class _BillsScreenState extends State<BillsScreen> with TickerProviderStateMixin
   Widget _buildDeleteBackground() {
     return Container(
       alignment: Alignment.centerRight,
-      padding: EdgeInsets.symmetric(horizontal: 20),
-      color: Colors.red,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      color: AppColors.error,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
@@ -352,10 +353,9 @@ class _BillsScreenState extends State<BillsScreen> with TickerProviderStateMixin
           if (_showSwipeHint && index == 0) {
             // Render the swipe hint as the first item
             return Card(
-              margin: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-              color: Colors.blue.shade50,
+              margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
               child: ListTile(
-                leading: Icon(Icons.info_outline, color: Colors.blue),
+                leading: Icon(Icons.info_outline, color: AppColors.primary),
                 title: Text('Swipe → to pay, ← to delete bills'),
                 trailing: IconButton(
                   icon: Icon(Icons.close),
@@ -412,8 +412,8 @@ class _BillsScreenState extends State<BillsScreen> with TickerProviderStateMixin
                 duration: Duration(milliseconds: 300),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
-                  border: isPayingThis 
-                      ? Border.all(color: Colors.green, width: 2)
+                  border: isPayingThis
+                      ? Border.all(color: AppColors.success, width: 2)
                       : null,
                 ),
                 child: ListTile(
@@ -431,7 +431,7 @@ class _BillsScreenState extends State<BillsScreen> with TickerProviderStateMixin
                         Positioned.fill(
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.success),
                           ),
                         ),
                     ],
@@ -457,7 +457,7 @@ class _BillsScreenState extends State<BillsScreen> with TickerProviderStateMixin
                         ),
                       if (bill.link != null && bill.link!.isNotEmpty)
                         IconButton(
-                          icon: Icon(Icons.link, size: 18, color: Colors.blue),
+                          icon: Icon(Icons.link, size: 18, color: AppColors.primary),
                           tooltip: 'Open Link',
                           onPressed: () => _launchBillLink(bill.link!),
                         ),
@@ -506,8 +506,8 @@ class _BillsScreenState extends State<BillsScreen> with TickerProviderStateMixin
                             child: Container(
                               padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
-                                color: Colors.green,
-                                borderRadius: BorderRadius.circular(12),
+                                color: AppColors.success,
+                                borderRadius: BorderRadius.circular(AppRadius.large),
                               ),
                               child: Text(
                                 'Pay',

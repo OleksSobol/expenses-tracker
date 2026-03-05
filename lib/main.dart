@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'screens/settings_screen.dart';
 import 'screens/bills_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/reports_screen.dart';
 import 'models/category.dart';
 
 
@@ -124,6 +125,7 @@ class _MainNavigationState extends State<MainNavigation> {
     _screens = [
       HomeScreen(),
       BillsScreen(),
+      ReportsScreen(),
       SettingsScreen(onThemeChanged: widget.onThemeChanged),
     ];
   }
@@ -139,6 +141,7 @@ class _MainNavigationState extends State<MainNavigation> {
             _currentIndex = index;
           });
         },
+        type: BottomNavigationBarType.fixed,
         items: [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
@@ -147,6 +150,10 @@ class _MainNavigationState extends State<MainNavigation> {
           BottomNavigationBarItem(
             icon: Icon(Icons.receipt_long),
             label: 'Bills',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bar_chart),
+            label: 'Reports',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),

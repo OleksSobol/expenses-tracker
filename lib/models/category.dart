@@ -15,7 +15,9 @@ class Category {
       'id': id,
       'name': name,
       'iconCode': icon.codePoint, // Store icon as code point
-      'colorValue': color.value,   // Store color as int value
+      'iconFontFamily': icon.fontFamily, // Store font family
+      'iconFontPackage': icon.fontPackage, // Store font package  
+      'colorValue': color.toARGB32(),   // Use toARGB32() instead of deprecated value
     };
   }
 
@@ -23,7 +25,11 @@ class Category {
     return Category(
       id: map['id'],
       name: map['name'],
-      icon: IconData(map['iconCode'], fontFamily: 'MaterialIcons'),
+      icon: IconData(
+        map['iconCode'], 
+        fontFamily: map['iconFontFamily'] ?? 'MaterialIcons',
+        fontPackage: map['iconFontPackage'],
+      ),
       color: Color(map['colorValue']),
     );
   }

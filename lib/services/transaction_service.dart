@@ -6,11 +6,35 @@ class TransactionService {
   final DBService _db = DBService();
 
   Future<List<Map<String, dynamic>>> getAllTransactions() async {
-    return await _db.queryAll('transactions');
+    try {
+      return await _db.queryAll('transactions');
+    } catch (e) {
+      throw Exception('Failed to load transactions: $e');
+    }
   }
 
   Future<void> deleteTransaction(int id) async {
-    await _db.delete('transactions', id);
+    try {
+      await _db.delete('transactions', id);
+    } catch (e) {
+      throw Exception('Failed to delete transaction: $e');
+    }
+  }
+
+  Future<int> addTransaction(Map<String, dynamic> transactionData) async {
+    try {
+      return await _db.insert('transactions', transactionData);
+    } catch (e) {
+      throw Exception('Failed to add transaction: $e');
+    }
+  }
+
+  Future<void> updateTransaction(int id, Map<String, dynamic> transactionData) async {
+    try {
+      await _db.update('transactions', id, transactionData);
+    } catch (e) {
+      throw Exception('Failed to update transaction: $e');
+    }
   }
 
   List<Map<String, dynamic>> filterAndSortTransactions(

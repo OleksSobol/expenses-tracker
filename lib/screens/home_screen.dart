@@ -28,15 +28,41 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadTransactions() async {
-    final transactions = await _transactionService.getAllTransactions();
-    setState(() {
-      _allTransactions = transactions;
-    });
+    try {
+      final transactions = await _transactionService.getAllTransactions();
+      setState(() {
+        _allTransactions = transactions;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load transactions: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            action: SnackBarAction(
+              label: 'Retry',
+              onPressed: _loadTransactions,
+            ),
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _loadCategories() async {
-    await CategoryService.loadCategories();
-    setState(() {});
+    try {
+      await CategoryService.loadCategories();
+      setState(() {});
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load categories: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _onFilterChanged(TransactionFilter newFilter) {
@@ -56,10 +82,30 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _onTransactionDelete(Map<String, dynamic> transaction) async {
-    await _transactionService.deleteTransaction(transaction['id']);
-    setState(() {
-      _allTransactions.removeWhere((tx) => tx['id'] == transaction['id']);
-    });
+    try {
+      await _transactionService.deleteTransaction(transaction['id']);
+      setState(() {
+        _allTransactions.removeWhere((tx) => tx['id'] == transaction['id']);
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Transaction deleted successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete transaction: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _onAddTransaction() async {

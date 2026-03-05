@@ -13,28 +13,44 @@ class BillService {
 
   // Get all bills ordered by due date
   Future<List<Map<String, dynamic>>> getAllBills() async {
-    final db = await _dbService.database;
-    return await db.query(tableName, orderBy: 'nextDueDate ASC');
+    try {
+      final db = await _dbService.database;
+      return await db.query(tableName, orderBy: 'nextDueDate ASC');
+    } catch (e) {
+      throw Exception('Failed to load bills: $e');
+    }
   }
 
   // Add a new bill
   Future<int> addBill(Bill bill) async {
-    final result = await _dbService.insert(tableName, bill.toMap());
-    await _rescheduleNotifications();
-    return result;
+    try {
+      final result = await _dbService.insert(tableName, bill.toMap());
+      await _rescheduleNotifications();
+      return result;
+    } catch (e) {
+      throw Exception('Failed to add bill: $e');
+    }
   }
 
   // Update existing bill
   Future<void> updateBill(int id, Bill bill) async {
-    await _dbService.update(tableName, id, bill.toMap());
-    await _rescheduleNotifications();
+    try {
+      await _dbService.update(tableName, id, bill.toMap());
+      await _rescheduleNotifications();
+    } catch (e) {
+      throw Exception('Failed to update bill: $e');
+    }
   }
 
   // Delete bill
   Future<int> deleteBill(int id) async {
-    final result = await _dbService.delete(tableName, id);
-    await _rescheduleNotifications();
-    return result;
+    try {
+      final result = await _dbService.delete(tableName, id);
+      await _rescheduleNotifications();
+      return result;
+    } catch (e) {
+      throw Exception('Failed to delete bill: $e');
+    }
   }
 
   // Get bill by ID
@@ -54,23 +70,29 @@ class BillService {
 
   // Mark bill as paid and create transaction
   Future<void> markBillAsPaid(Bill bill) async {
-    if (bill.id == null) return;
+    try {
+      if (bill.id == null) {
+        throw Exception('Cannot mark bill as paid: Bill ID is null');
+      }
 
-    final updatedBill = bill.markAsPaid();
-    await updateBill(bill.id!, updatedBill);
+      final updatedBill = bill.markAsPaid();
+      await updateBill(bill.id!, updatedBill);
 
-    final transaction = TransactionModel(
-      amount: bill.amount,
-      type: 'expense',
-      categoryId: bill.categoryId ?? 5,
-      date: DateTime.now(),
-      note: 'Bill payment: ${bill.name}',
-      billId: bill.id,
-    );
+      final transaction = TransactionModel(
+        amount: bill.amount,
+        type: 'expense',
+        categoryId: bill.categoryId ?? 5,
+        date: DateTime.now(),
+        note: 'Bill payment: ${bill.name}',
+        billId: bill.id,
+      );
 
-    // Insert transaction
-    await _dbService.insert('transactions', transaction.toMap());
-    await _rescheduleNotifications();
+      // Insert transaction
+      await _dbService.insert('transactions', transaction.toMap());
+      await _rescheduleNotifications();
+    } catch (e) {
+      throw Exception('Failed to mark bill as paid: $e');
+    }
   }
 
   // Get overdue bills

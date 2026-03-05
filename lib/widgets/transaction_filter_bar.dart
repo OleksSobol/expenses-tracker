@@ -189,7 +189,7 @@ class _TransactionFilterBarState extends State<TransactionFilterBar>
                       children: [
                         Expanded(
                           child: DropdownButtonFormField<String>(
-                            value: widget.filter.sortBy,
+                            initialValue: widget.filter.sortBy,
                             decoration: const InputDecoration(
                               isDense: true,
                               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),

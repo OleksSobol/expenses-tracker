@@ -66,33 +66,54 @@ class DBService {
   }
 
   Future<int> insert(String table, Map<String, dynamic> data) async {
-    final db = await database;
     try {
+      final db = await database;
       return await db.insert(table, data);
     } catch (e) {
-      print('DB Insert Error: $e');
-      return -1;
+      throw Exception('Failed to insert data into $table: $e');
     }
   }
 
   Future<void> update(String table, int id, Map<String, dynamic> values) async {
-    final db = await database;
-    await db.update(table, values, where: 'id = ?', whereArgs: [id]);
+    try {
+      final db = await database;
+      final rowsAffected = await db.update(table, values, where: 'id = ?', whereArgs: [id]);
+      if (rowsAffected == 0) {
+        throw Exception('No record found with id $id in table $table');
+      }
+    } catch (e) {
+      throw Exception('Failed to update record in $table: $e');
+    }
   }
 
   Future<int> delete(String table, int id) async {
-    final db = await database;
-    return await db.delete(table, where: 'id = ?', whereArgs: [id]);
+    try {
+      final db = await database;
+      final rowsAffected = await db.delete(table, where: 'id = ?', whereArgs: [id]);
+      if (rowsAffected == 0) {
+        throw Exception('No record found with id $id in table $table');
+      }
+      return rowsAffected;
+    } catch (e) {
+      throw Exception('Failed to delete record from $table: $e');
+    }
   }
   
   Future<List<Map<String, dynamic>>> queryAll(String table) async {
-    final db = await database;
-    return await db.query(table, orderBy: 'id DESC');
+    try {
+      final db = await database;
+      return await db.query(table, orderBy: 'id DESC');
+    } catch (e) {
+      throw Exception('Failed to query data from $table: $e');
+    }
   }
 
   Future<void> clearTable(String table) async {
-    final db = await database;
-    await db.delete(table);
-    print('$table cleared');
+    try {
+      final db = await database;
+      await db.delete(table);
+    } catch (e) {
+      throw Exception('Failed to clear table $table: $e');
+    }
   }
 }

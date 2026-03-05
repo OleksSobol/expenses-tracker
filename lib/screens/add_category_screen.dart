@@ -1,7 +1,5 @@
 // screens/add_category_screen.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_iconpicker/Models/configuration.dart';
-import 'package:flutter_iconpicker/flutter_iconpicker.dart';
 import '../models/category.dart';
 
 class AddCategoryScreen extends StatefulWidget {
@@ -59,18 +57,134 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
     super.dispose();
   }
 
+  // Popular Material Icons for categories
+  final List<IconData> _availableIcons = [
+    Icons.shopping_cart,
+    Icons.restaurant,
+    Icons.local_gas_station,
+    Icons.medical_services,
+    Icons.school,
+    Icons.fitness_center,
+    Icons.home,
+    Icons.directions_car,
+    Icons.flight,
+    Icons.movie,
+    Icons.shopping_bag,
+    Icons.coffee,
+    Icons.pets,
+    Icons.work,
+    Icons.phone,
+    Icons.wifi,
+    Icons.electric_bolt,
+    Icons.water_drop,
+    Icons.local_grocery_store,
+    Icons.local_pharmacy,
+    Icons.local_hospital,
+    Icons.local_taxi,
+    Icons.train,
+    Icons.directions_bus,
+    Icons.hotel,
+    Icons.restaurant_menu,
+    Icons.local_cafe,
+    Icons.local_bar,
+    Icons.fastfood,
+    Icons.cake,
+    Icons.local_pizza,
+    Icons.icecream,
+    Icons.sports_soccer,
+    Icons.sports_basketball,
+    Icons.sports_tennis,
+    Icons.sports_golf,
+    Icons.sports_baseball,
+    Icons.pool,
+    Icons.beach_access,
+    Icons.park,
+    Icons.forest,
+    Icons.music_note,
+    Icons.headphones,
+    Icons.tv,
+    Icons.videogame_asset,
+    Icons.book,
+    Icons.library_books,
+    Icons.brush,
+    Icons.palette,
+    Icons.camera,
+    Icons.photo_camera,
+    Icons.volunteer_activism,
+    Icons.favorite,
+    Icons.star,
+    Icons.celebration,
+    Icons.card_giftcard,
+    Icons.redeem,
+    Icons.savings,
+    Icons.account_balance,
+    Icons.credit_card,
+    Icons.payment,
+    Icons.currency_exchange,
+    Icons.attach_money,
+    Icons.euro,
+    Icons.category,
+  ];
+
   Future<void> _pickIcon() async {
-    // showIconPicker returns an IconPickerIcon (or null), which has .data (IconData)
-    final IconPickerIcon? pickedIcon = await showIconPicker(
-      context,
-      configuration: const SinglePickerConfiguration(
-        iconPackModes: [IconPack.material],
-      ),
+    final IconData? pickedIcon = await showDialog<IconData>(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Choose an Icon',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 400,
+                  width: double.maxFinite,
+                  child: GridView.builder(
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 6,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                    ),
+                    itemCount: _availableIcons.length,
+                    itemBuilder: (context, index) {
+                      final icon = _availableIcons[index];
+                      return GestureDetector(
+                        onTap: () => Navigator.of(context).pop(icon),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade300),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            icon,
+                            size: 28,
+                            color: _selectedColor,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
 
     if (pickedIcon != null) {
       setState(() {
-        _selectedIcon = pickedIcon.data;
+        _selectedIcon = pickedIcon;
       });
     }
   }
