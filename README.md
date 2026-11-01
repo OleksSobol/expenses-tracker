@@ -1,6 +1,6 @@
 # Expenses Tracker
 
-A Flutter app for tracking personal income, expenses, and recurring bills. All data stays on your device — no accounts, no cloud, no tracking.
+A Flutter app for tracking personal income, expenses, and recurring bills.
 
 **Version 1.0.0** · Android
 
